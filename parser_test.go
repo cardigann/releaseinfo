@@ -201,6 +201,8 @@ func TestParsingSingleEpisodeNumber(t *testing.T) {
 			fmt.Sprintf("Row %d should have correct season number", idx+1))
 		require.False(t, result.FullSeason, 1,
 			fmt.Sprintf("Row %d should not be a full season)", idx+1))
+		require.False(t, result.IsPossibleSpecialEpisode(),
+			fmt.Sprintf("Row %d should not be a possible special episode", idx+1))
 	}
 }
 
@@ -239,6 +241,8 @@ func TestParseFullSeasonReleases(t *testing.T) {
 			fmt.Sprintf("Row %d should have 0 absolute episode numbers)", idx+1))
 		require.Equal(t, test.expectedSeason, result.SeasonNumber,
 			fmt.Sprintf("Row %d should have correct season number", idx+1))
+		require.False(t, result.IsPossibleSpecialEpisode(),
+			fmt.Sprintf("Row %d should not be a possible special episode", idx+1))
 	}
 }
 
