@@ -1,6 +1,9 @@
 ﻿package releaseinfo
 
 import (
+	"errors"
+	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/dlclark/regexp2"
@@ -17,6 +20,8 @@ var SubtitleLanguageRegex = regexp2.MustCompile(
 
 func ParseLanguage(title string) language.Tag {
 	lowerTitle := strings.ToLower(title)
+
+	log.Printf("Parsing language from %s", title)
 
 	if strings.Contains(lowerTitle, "english") {
 		return language.English
@@ -43,11 +48,11 @@ func ParseLanguage(title string) language.Tag {
 	}
 
 	if strings.Contains(lowerTitle, "cantonese") {
-		panic("cantonese not supported")
+		return language.MustParse("yue")
 	}
 
 	if strings.Contains(lowerTitle, "mandarin") {
-		panic("cantonese not mandarin")
+		return language.MustParse("cmn")
 	}
 
 	if strings.Contains(lowerTitle, "korean") {
@@ -100,65 +105,51 @@ func ParseLanguage(title string) language.Tag {
 		return language.English
 	}
 
-	if match.GroupByName("italian") != nil {
+	if hasGroup(match, "italian") {
 		return language.Italian
 	}
 
-	if match.GroupByName("german") != nil {
+	if hasGroup(match, "german") {
 		return language.German
 	}
 
-	if match.GroupByName("flemish") != nil {
-		panic("flemish not supported")
+	if hasGroup(match, "flemish") {
+		return language.MustParse("nl-BE")
 	}
 
-	if match.GroupByName("greek") != nil {
+	if hasGroup(match, "greek") {
 		return language.Greek
 	}
 
-	if match.GroupByName("french") != nil {
+	if hasGroup(match, "french") {
 		return language.French
 	}
 
-	if match.GroupByName("russian") != nil {
+	if hasGroup(match, "russian") {
 		return language.Russian
 	}
 
-	if match.GroupByName("dutch") != nil {
+	if hasGroup(match, "dutch") {
 		return language.Dutch
 	}
 
-	if match.GroupByName("hungarian") != nil {
+	if hasGroup(match, "hungarian") {
 		return language.Hungarian
 	}
 
 	return language.English
 }
 
-//     public static Language ParseSubtitleLanguage(string fileName)
-//     {
-//         try
-//         {
-//             log.Printf("Parsing language from subtitlte file: {0}", fileName)
+func ParseSubtitleLanguage(fileName string) (language.Tag, error) {
+	log.Printf("Parsing language from subtitle file: %s", fileName)
 
-//             var simpleFilename = Path.GetFileNameWithoutExtension(fileName)
-//             var languageMatch = SubtitleLanguageRegex.Match(simpleFilename)
+	ext := filepath.Ext(fileName)
+	simpleFilename := strings.TrimSuffix(filepath.Base(fileName), ext)
+	languageMatch, _ := SubtitleLanguageRegex.FindStringMatch(simpleFilename)
 
-//             if (languageMatch.Success)
-//             {
-//                 var isoCode = languageMatch.Groups["iso_code"].Value
-//                 var isoLanguage = IsoLanguages.Find(isoCode)
+	if hasGroup(languageMatch, "iso_code") {
+		return language.Make(getMatchGroupString(languageMatch, "iso_code")), nil
+	}
 
-//                 return isoLanguage?.Language ?? Language.Unknown
-//             }
-
-//             log.Printf("Unable to parse langauge from subtitle file: {0}", fileName)
-//         }
-//         catch (Exception ex)
-//         {
-//             log.Printf("Failed parsing langauge from subtitle file: {0}", fileName)
-//         }
-
-//         return Language.Unknown
-//     }
-// }
+	return language.Tag{}, errors.New("Unable to find a subtitle language")
+}

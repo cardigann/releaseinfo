@@ -2,9 +2,11 @@ package releaseinfo
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/language"
 )
 
 func TestParseSeriesName(t *testing.T) {
@@ -294,4 +296,166 @@ func TestParsingHashedReleases(t *testing.T) {
 		require.Equal(t, test.expectedReleaseGroup, result.ReleaseGroup,
 			fmt.Sprintf("Row %d should have correct quality", idx+1))
 	}
+}
+
+func TestCleanSeriesTitle(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle, expectedTitle string
+	}{
+		{"Conan", "conan"},
+		{"Castle (2009)", "castle2009"},
+		{"Parenthood.2010", "parenthood2010"},
+		{"Law_and_Order_SVU", "lawordersvu"},
+		{"CaPitAl", "capital"},
+		{"peri.od", "period"},
+		{"this.^&%^**$%@#$!That", "thisthat"},
+		{"test/test", "testtest"},
+		{"90210", "90210"},
+		{"24", "24"},
+	} {
+		require.Equal(t, test.expectedTitle, CleanSeriesTitle(test.postTitle),
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+	}
+}
+
+func TestCleanSeriesTitleRemovesCommonWords(t *testing.T) {
+	for idx, word := range []string{
+		"the", "and", "or", "an", "of", "a",
+	} {
+		for _, format := range []string{
+			"word.%q.word",
+			"word %q word",
+			"word-%q-word",
+			"word.word.%q",
+			"word-word-%q",
+			"word-word %q",
+		} {
+			require.Equal(t, "wordword", CleanSeriesTitle(fmt.Sprintf(format, word)),
+				fmt.Sprintf("Row %d should have correct title", idx+1))
+		}
+	}
+}
+
+func TestCleanSeriesTitleShouldntRemoveCommonWordsFromInsideOtherWords(t *testing.T) {
+	for idx, word := range []string{
+		"the", "and", "or", "an", "of", "a",
+	} {
+		for _, format := range []string{
+			"word.%sword",
+			"word %sword",
+			"word-%sword",
+			"word%s.word",
+			"word%s-word",
+			"word%s-word",
+		} {
+			require.Equal(t,
+				"word"+strings.ToLower(word)+"word",
+				CleanSeriesTitle(fmt.Sprintf(format, word)),
+				fmt.Sprintf("Row %d should have correct title", idx+1))
+		}
+	}
+}
+
+func TestCleanSeriesTitleShouldntRemoveCommonWordsFromStartOfString(t *testing.T) {
+	for idx, word := range []string{
+		"the", "and", "or", "an", "of", "a",
+	} {
+		for _, format := range []string{
+			"%s.word.word",
+			"%s-word-word",
+			"%s word word",
+		} {
+			require.Equal(t,
+				strings.ToLower(word)+"wordword",
+				CleanSeriesTitle(fmt.Sprintf(format, word)),
+				fmt.Sprintf("Row %d should have correct title", idx+1))
+		}
+	}
+}
+
+func TestCleanSeriesTitleShouldntRemoveTheFromStartOfTitle(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle, expectedTitle string
+	}{
+		{"The Office", "theoffice"},
+		{"The Tonight Show With Jay Leno", "thetonightshowwithjayleno"},
+		{"The.Daily.Show", "thedailyshow"},
+	} {
+		require.Equal(t, CleanSeriesTitle(test.postTitle), test.expectedTitle,
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+	}
+}
+
+func TestCleanSeriesTitleShouldntRemoveAFromEndOfString(t *testing.T) {
+	require.Equal(t, CleanSeriesTitle("Tokyo Ghoul A"), "tokyoghoula")
+}
+
+func TestParsingTitleLanguage(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle        string
+		expectedLanguage language.Tag
+	}{
+		{"Castle.2009.S01E14.English.HDTV.XviD-LOL", language.English},
+		{"Castle.2009.S01E14.French.HDTV.XviD-LOL", language.French},
+		{"Castle.2009.S01E14.Spanish.HDTV.XviD-LOL", language.Spanish},
+		{"Castle.2009.S01E14.German.HDTV.XviD-LOL", language.German},
+		{"Castle.2009.S01E14.Germany.HDTV.XviD-LOL", language.English},
+		{"Castle.2009.S01E14.Italian.HDTV.XviD-LOL", language.Italian},
+		{"Castle.2009.S01E14.Danish.HDTV.XviD-LOL", language.Danish},
+		{"Castle.2009.S01E14.Dutch.HDTV.XviD-LOL", language.Dutch},
+		{"Castle.2009.S01E14.Japanese.HDTV.XviD-LOL", language.Japanese},
+		{"Castle.2009.S01E14.Cantonese.HDTV.XviD-LOL", language.MustParse("yue")},
+		{"Castle.2009.S01E14.Mandarin.HDTV.XviD-LOL", language.MustParse("cmn")},
+		{"Castle.2009.S01E14.Korean.HDTV.XviD-LOL", language.Korean},
+		{"Castle.2009.S01E14.Russian.HDTV.XviD-LOL", language.Russian},
+		{"Castle.2009.S01E14.Polish.HDTV.XviD-LOL", language.Polish},
+		{"Castle.2009.S01E14.Vietnamese.HDTV.XviD-LOL", language.Vietnamese},
+		{"Castle.2009.S01E14.Swedish.HDTV.XviD-LOL", language.Swedish},
+		{"Castle.2009.S01E14.Norwegian.HDTV.XviD-LOL", language.Norwegian},
+		{"Castle.2009.S01E14.Finnish.HDTV.XviD-LOL", language.Finnish},
+		{"Castle.2009.S01E14.Turkish.HDTV.XviD-LOL", language.Turkish},
+		{"Castle.2009.S01E14.Portuguese.HDTV.XviD-LOL", language.Portuguese},
+		{"Castle.2009.S01E14.HDTV.XviD-LOL", language.English},
+		{"person.of.interest.1x19.ita.720p.bdmux.x264-novarip", language.Italian},
+		{"Salamander.S01E01.FLEMISH.HDTV.x264-BRiGAND", language.MustParse("nl-BE")},
+		{"H.Polukatoikia.S03E13.Greek.PDTV.XviD-Ouzo", language.Greek},
+		{"Burn.Notice.S04E15.Brotherly.Love.GERMAN.DUBBED.WS.WEBRiP.XviD.REPACK-TVP", language.German},
+		{"Ray Donovan - S01E01.720p.HDtv.x264-Evolve (NLsub)", language.Dutch},
+		{"Shield,.The.1x13.Tueurs.De.Flics.FR.DVDRip.XviD", language.French},
+		{"True.Detective.S01E01.1080p.WEB-DL.Rus.Eng.TVKlondike", language.Russian},
+		{"The.Trip.To.Italy.S02E01.720p.HDTV.x264-TLA", language.English},
+		{"Revolution S01E03 No Quarter 2012 WEB-DL 720p Nordic-philipo mkv", language.Norwegian},
+		{"Extant.S01E01.VOSTFR.HDTV.x264-RiDERS", language.French},
+		{"Constantine.2014.S01E01.WEBRiP.H264.AAC.5.1-NL.SUBS", language.Dutch},
+		{"Elementary - S02E16 - Kampfhaehne - mkv - by Videomann", language.German},
+		{"Two.Greedy.Italians.S01E01.The.Family.720p.HDTV.x264-FTP", language.English},
+		{"Castle.2009.S01E14.HDTV.XviD.HUNDUB-LOL", language.Hungarian},
+		{"Castle.2009.S01E14.HDTV.XviD.ENG.HUN-LOL", language.Hungarian},
+		{"Castle.2009.S01E14.HDTV.XviD.HUN-LOL", language.Hungarian},
+	} {
+		require.Equal(t, ParseLanguage(test.postTitle).String(), test.expectedLanguage.String(),
+			fmt.Sprintf("Row %d should have correct language", idx+1))
+	}
+}
+
+func TestParsingSubtitleTitleLanguage(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle        string
+		expectedLanguage language.Tag
+	}{
+		{"2 Broke Girls - S01E01 - Pilot.en.sub", language.English},
+		{"2 Broke Girls - S01E01 - Pilot.eng.sub", language.English},
+		// {"2 Broke Girls - S01E01 - Pilot.sub", language.English},
+	} {
+		lang, err := ParseSubtitleLanguage(test.postTitle)
+		require.NoError(t, err,
+			fmt.Sprintf("Row %d should have no error", idx+1))
+		require.Equal(t, lang.String(), test.expectedLanguage.String(),
+			fmt.Sprintf("Row %d should have correct subtitle language", idx+1))
+	}
+}
+
+func TestParsingSubtitleTitleLanguageFailsWhenNotPresent(t *testing.T) {
+	_, err := ParseSubtitleLanguage("2 Broke Girls - S01E01 - Pilot.sub")
+	require.Error(t, err)
 }
