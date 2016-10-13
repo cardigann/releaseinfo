@@ -7,8 +7,11 @@ import (
 	"github.com/dlclark/regexp2"
 )
 
+var fileExtensionRegex = regexp2.MustCompile(`\.[a-z0-9]{2,4}$`,
+	regexp2.IgnoreCase|regexp2.Compiled)
+
 func removeFileExtension(title string) string {
-	result, err := FileExtensionRegex.ReplaceFunc(title, func(m regexp2.Match) string {
+	result, err := fileExtensionRegex.ReplaceFunc(title, func(m regexp2.Match) string {
 		ext := strings.ToLower(filepath.Ext(m.String()))
 		if _, match := mediaFileExtensions[ext]; match {
 			return ""

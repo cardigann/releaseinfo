@@ -1,6 +1,8 @@
 package releaseinfo
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -9,6 +11,22 @@ import (
 
 	"github.com/dlclark/regexp2"
 )
+
+var numbers = []string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
+
+func parseNumber(value string) (int, error) {
+	if val, err := strconv.Atoi(value); err == nil {
+		return val, nil
+	}
+
+	for idx, num := range numbers {
+		if strings.ToLower(value) == num {
+			return idx, nil
+		}
+	}
+
+	return 0, fmt.Errorf("%v isn't a number", value)
+}
 
 func isNullOrWhiteSpace(s string) bool {
 	return removeSpace(s) == ""

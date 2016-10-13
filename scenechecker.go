@@ -15,7 +15,7 @@ func IsSceneTitle(title string) (bool, error) {
 		return false, nil
 	}
 
-	parsedTitle, err := ParseTitle(title)
+	parsedTitle, err := Parse(title)
 	if err != nil {
 		return false, err
 	}

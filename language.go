@@ -9,11 +9,11 @@ import (
 	"golang.org/x/text/language"
 )
 
-var LanguageRegex = regexp2.MustCompile(
+var languageRegex = regexp2.MustCompile(
 	`(?:\W|_)(?<italian>\b(?:ita|italian)\b)|(?<german>german\b|videomann)|(?<flemish>flemish)|(?<greek>greek)|(?<french>(?:\W|_)(?:FR|VOSTFR)(?:\W|_))|(?<russian>\brus\b)|(?<dutch>nl\W?subs?)|(?<hungarian>\b(?:HUNDUB|HUN)\b)`,
 	regexp2.IgnoreCase|regexp2.Compiled)
 
-var SubtitleLanguageRegex = regexp2.MustCompile(
+var subtitleLanguageRegex = regexp2.MustCompile(
 	`.+?[-_. ](?<iso_code>[a-z]{2,3})$`,
 	regexp2.Compiled|regexp2.IgnoreCase)
 
@@ -98,7 +98,7 @@ func ParseLanguage(title string) language.Tag {
 		return language.Hungarian
 	}
 
-	match, _ := LanguageRegex.FindStringMatch(title)
+	match, _ := languageRegex.FindStringMatch(title)
 
 	if match == nil {
 		return language.English
@@ -144,7 +144,7 @@ func ParseSubtitleLanguage(fileName string) (language.Tag, error) {
 
 	ext := filepath.Ext(fileName)
 	simpleFilename := strings.TrimSuffix(filepath.Base(fileName), ext)
-	languageMatch, _ := SubtitleLanguageRegex.FindStringMatch(simpleFilename)
+	languageMatch, _ := subtitleLanguageRegex.FindStringMatch(simpleFilename)
 
 	if hasGroup(languageMatch, "iso_code") {
 		return language.Make(getMatchGroupString(languageMatch, "iso_code")), nil

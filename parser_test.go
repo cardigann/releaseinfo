@@ -41,7 +41,7 @@ func TestRemovingAccentsFromTitle(t *testing.T) {
 }
 
 func TestRemovingExtensionsFromTitle(t *testing.T) {
-	_, err := ParseTitle("Discovery TV - Gold Rush : 02 Road From Hell [S04].mp4")
+	_, err := Parse("Discovery TV - Gold Rush : 02 Road From Hell [S04].mp4")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestParsingYearFromTitle(t *testing.T) {
 		{"House.S01E01.pilot.720p.hdtv", "House", "House", 0},
 		{"House.2004.S01E01.pilot.720p.hdtv", "House 2004", "House", 2004},
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.Equal(t, test.expectedYear, result.SeriesTitleInfo.Year,
@@ -186,7 +186,7 @@ func TestParsingSingleEpisodeNumber(t *testing.T) {
 		//[TestCase("Heroes - S01E01 - Genesis 101 [HDTV-720p]", "Heroes", 1, 1)]
 		//[TestCase("The 100 S02E01 HDTV x264-KILLERS [eztv]", "The 100", 2, 1)]
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
@@ -228,7 +228,7 @@ func TestParseFullSeasonReleases(t *testing.T) {
 		{"Holmes.Makes.It.Right.S02.720p.HDTV.AAC5.1.x265-NOGRP", "Holmes Makes It Right", 2},
 		{"My.Series.S2014.720p.HDTV.x264-ME", "My Series", 2014},
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.True(t, result.FullSeason, 1,
@@ -255,7 +255,7 @@ func TestNotParseSeasonExtrasAndSubpacks(t *testing.T) {
 		"The.Middle.S02.SUBPACK.DVDRip.XviD-REWARD",
 		"CSI.S11.SUBPACK.DVDRip.XviD-REWARD",
 	} {
-		result, err := ParseTitle(postTitle)
+		result, err := Parse(postTitle)
 		require.Error(t, err,
 			fmt.Sprintf("Row %d should have an error", idx+1))
 		require.Nil(t, result,
@@ -545,7 +545,7 @@ func TestParsingAbsoluteEpisodeNumber(t *testing.T) {
 		{"[Cthuyuu] Taimadou Gakuen 35 Shiken Shoutai - 03 [720p H264 AAC][8AD82C3A]", "Taimadou Gakuen 35 Shiken Shoutai", 3, 0, 0},
 		{"Dragon Ball Super Episode 56 [VOSTFR V2][720p][AAC]-Mystic Z-Team", "Dragon Ball Super", 56, 0, 0},
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
@@ -580,7 +580,7 @@ func TestParsingAbsoluteSpecials(t *testing.T) {
 		{"[DeadFish] Kenzen Robo Daimidaler - 01 - OVA [BD][720p][AAC]", "Kenzen Robo Daimidaler", 1},
 		{"[DeadFish] Kenzen Robo Daimidaler - 01 - OVD [BD][720p][AAC]", "Kenzen Robo Daimidaler", 1},
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.True(t, result.Special,
@@ -610,7 +610,7 @@ func TestParsingMultiAbsoluteEpisodes(t *testing.T) {
 		{"[RlsGrp] Series Title (2010) - S01E01-02 - 001-002 - Episode Title HDTV-720p v2", "Series Title (2010)", []int{1, 2}},
 		{"Series Title (2010) - S01E01-02 (001-002) - Episode Title (1) HDTV-720p v2 [RlsGrp]", "Series Title (2010)", []int{1, 2}},
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
@@ -643,7 +643,7 @@ func TestParsingDailyEpisodes(t *testing.T) {
 		{"At_Midnight_140722_720p_HDTV_x264-YesTV", "At Midnight", 2014, 7, 22},
 		{"The Nightly Show with Larry Wilmore 2015 02 09 WEBRIP s01e13", "The Nightly Show with Larry Wilmore", 2015, 2, 9},
 	} {
-		result, err := ParseTitle(test.postTitle)
+		result, err := Parse(test.postTitle)
 
 		require.NoError(t, err)
 		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
@@ -671,7 +671,7 @@ func TestShouldNotParseDailyEpisodesWithFutureTimes(t *testing.T) {
 		{"The Tonight Show with Jay Leno - %s-%s-%s - Larry David, \"Bachelorette\" Ashley Hebert, Pitbull with Ne-Yo"},
 		{"2020.NZ.%s.%s.%s.PDTV.XviD-C4TV"},
 	} {
-		_, err := ParseTitle(fmt.Sprintf(test.postTitle, "2100", "10", "01"))
+		_, err := Parse(fmt.Sprintf(test.postTitle, "2100", "10", "01"))
 		require.Error(t, err, "Dates in future should fail")
 	}
 }
@@ -793,7 +793,7 @@ func TestParsingAnimeMetadata(t *testing.T) {
 		{"[ACX]Hack Sign 01 Role Play [Kosaka] [9C57891E].mkv", "ACX", "9C57891E"},
 		{"[S-T-D] Soul Eater Not! - 06 (1280x720 10bit AAC) [59B3F2EA].mkv", "S-T-D", "59B3F2EA"},
 	} {
-		result, err := ParseTitle(test.title)
+		result, err := Parse(test.title)
 
 		require.NoError(t, err,
 			fmt.Sprintf("Row %d should have no error", idx+1))
@@ -857,7 +857,7 @@ func TestParsingMultiEpisodeTitles(t *testing.T) {
 		{"Series Title.S6.E1E2.Episode Name.1080p.WEB-DL", "Series Title", 6, []int{1, 2}},
 		{"Series Title.S6.E1-E2-E3.Episode Name.1080p.WEB-DL", "Series Title", 6, []int{1, 2, 3}},
 	} {
-		result, err := ParseTitle(test.title)
+		result, err := Parse(test.title)
 
 		require.NoError(t, err,
 			fmt.Sprintf("Row %d should have no error", idx+1))
@@ -884,7 +884,7 @@ func TestParsingMiniSeriesEpisodeTitles(t *testing.T) {
 		{"the-pacific-e07-720p", "the-pacific", 7},
 		{"Hatfields and McCoys 2012 Part 1 REPACK 720p HDTV x264 2HD", "Hatfields and McCoys 2012", 1},
 	} {
-		result, err := ParseTitle(test.title)
+		result, err := Parse(test.title)
 
 		require.NoError(t, err,
 			fmt.Sprintf("Row %d should have no error", idx+1))
