@@ -18,7 +18,7 @@
 //             if (parsedTitle == null ||
 //                 parsedTitle.ReleaseGroup == null ||
 //                 parsedTitle.Quality.Quality == Qualities.Quality.Unknown ||
-//                 string.IsNullOrWhiteSpace(parsedTitle.SeriesTitle))
+//                 isNullOrWhiteSpace(parsedTitle.SeriesTitle))
 //             {
 //                 return false;
 //             }

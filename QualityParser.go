@@ -1,383 +1,346 @@
 ﻿package releaseinfo
 
-// using System;
-// using System.IO;
-// using System.Linq;
-// using System.Text.RegularExpressions;
-// using NLog;
-// using NzbDrone.Common.Extensions;
-// using NzbDrone.Common.Instrumentation;
-// using NzbDrone.Core.MediaFiles;
-// using NzbDrone.Core.Qualities;
-
-// namespace NzbDrone.Core.Parser
-// {
-//     public class QualityParser
-//     {
-//         private static readonly Logger Logger = NzbDroneLogger.GetLogger(typeof(QualityParser));
-
-//         private static readonly Regex SourceRegex = new Regex(@"\b(?:
-//                                                                 (?<bluray>BluRay|Blu-Ray|HDDVD|BD)|
-//                                                                 (?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD|[. ]WEB[. ](?:[xh]26[45]|DD5[. ]1)|\d+0p[. ]WEB[. ])|
-//                                                                 (?<hdtv>HDTV)|
-//                                                                 (?<bdrip>BDRip)|
-//                                                                 (?<brrip>BRRip)|
-//                                                                 (?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|
-//                                                                 (?<dsr>WS[-_. ]DSR|DSR)|
-//                                                                 (?<pdtv>PDTV)|
-//                                                                 (?<sdtv>SDTV)|
-//                                                                 (?<tvrip>TVRip)
-//                                                                 )\b",
-//                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
-
-//         private static readonly Regex RawHDRegex = new Regex(@"\b(?<rawhd>RawHD|1080i[-_. ]HDTV|Raw[-_. ]HD|MPEG[-_. ]?2)\b",
-//                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex ProperRegex = new Regex(@"\b(?<proper>proper|repack|rerip)\b",
-//                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex VersionRegex = new Regex(@"\dv(?<version>\d)\b|\[v(?<version>\d)\]",
-//                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex RealRegex = new Regex(@"\b(?<real>REAL)\b",
-//                                                                 RegexOptions.Compiled);
-
-//         private static readonly Regex ResolutionRegex = new Regex(@"\b(?:(?<_480p>480p|640x480|848x480)|(?<_576p>576p)|(?<_720p>720p|1280x720)|(?<_1080p>1080p|1920x1080)|(?<_2160p>2160p))\b",
-//                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex CodecRegex = new Regex(@"\b(?:(?<x264>x264)|(?<h264>h264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))\b",
-//                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex OtherSourceRegex = new Regex(@"(?<hdtv>HD[-_. ]TV)|(?<sdtv>SD[-_. ]TV)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex AnimeBlurayRegex = new Regex(@"bd(?:720|1080)|(?<=[-_. (\[])bd(?=[-_. )\]])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         private static readonly Regex HighDefPdtvRegex = new Regex(@"hr[-_. ]ws", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-//         public static QualityModel ParseQuality(string name)
-//         {
-//             Logger.Debug("Trying to parse quality for {0}", name);
-
-//             name = name.Trim();
-//             var normalizedName = name.Replace('_', ' ').Trim().ToLower();
-//             var result = ParseQualityModifiers(name, normalizedName);
-
-//             if (RawHDRegex.IsMatch(normalizedName))
-//             {
-//                 result.Quality = Quality.RAWHD;
-//                 return result;
-//             }
-
-//             var sourceMatch = SourceRegex.Matches(normalizedName).OfType<Match>().LastOrDefault();
-//             var resolution = ParseResolution(normalizedName);
-//             var codecRegex = CodecRegex.Match(normalizedName);
-
-//             if (sourceMatch != null && sourceMatch.Success)
-//             {
-//                 if (sourceMatch.Groups["bluray"].Success)
-//                 {
-//                     if (codecRegex.Groups["xvid"].Success || codecRegex.Groups["divx"].Success)
-//                     {
-//                         result.Quality = Quality.DVD;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._2160p)
-//                     {
-//                         result.Quality = Quality.Bluray2160p;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._1080p)
-//                     {
-//                         result.Quality = Quality.Bluray1080p;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._480p || resolution == Resolution._576p)
-//                     {
-//                         result.Quality = Quality.DVD;
-//                         return result;
-//                     }
-
-//                     result.Quality = Quality.Bluray720p;
-//                     return result;
-//                 }
-
-//                 if (sourceMatch.Groups["webdl"].Success)
-//                 {
-//                     if (resolution == Resolution._2160p)
-//                     {
-//                         result.Quality = Quality.WEBDL2160p;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._1080p)
-//                     {
-//                         result.Quality = Quality.WEBDL1080p;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._720p)
-//                     {
-//                         result.Quality = Quality.WEBDL720p;
-//                         return result;
-//                     }
-
-//                     if (name.Contains("[WEBDL]"))
-//                     {
-//                         result.Quality = Quality.WEBDL720p;
-//                         return result;
-//                     }
-
-//                     result.Quality = Quality.WEBDL480p;
-//                     return result;
-//                 }
-
-//                 if (sourceMatch.Groups["hdtv"].Success)
-//                 {
-//                     if (resolution == Resolution._2160p)
-//                     {
-//                         result.Quality = Quality.HDTV2160p;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._1080p)
-//                     {
-//                         result.Quality = Quality.HDTV1080p;
-//                         return result;
-//                     }
-
-//                     if (resolution == Resolution._720p)
-//                     {
-//                         result.Quality = Quality.HDTV720p;
-//                         return result;
-//                     }
-
-//                     if (name.Contains("[HDTV]"))
-//                     {
-//                         result.Quality = Quality.HDTV720p;
-//                         return result;
-//                     }
-
-//                     result.Quality = Quality.SDTV;
-//                     return result;
-//                 }
-
-//                 if (sourceMatch.Groups["bdrip"].Success ||
-//                     sourceMatch.Groups["brrip"].Success)
-//                 {
-//                     switch (resolution)
-//                     {
-//                         case Resolution._720p:
-//                             result.Quality = Quality.Bluray720p;
-//                             return result;
-//                         case Resolution._1080p:
-//                             result.Quality = Quality.Bluray1080p;
-//                             return result;
-//                         default:
-//                             result.Quality = Quality.DVD;
-//                             return result;
-//                     }
-//                 }
-
-//                 if (sourceMatch.Groups["dvd"].Success)
-//                 {
-//                     result.Quality = Quality.DVD;
-//                     return result;
-//                 }
-
-//                 if (sourceMatch.Groups["pdtv"].Success ||
-//                     sourceMatch.Groups["sdtv"].Success ||
-//                     sourceMatch.Groups["dsr"].Success ||
-//                     sourceMatch.Groups["tvrip"].Success)
-//                 {
-//                     if (HighDefPdtvRegex.IsMatch(normalizedName))
-//                     {
-//                         result.Quality = Quality.HDTV720p;
-//                         return result;
-//                     }
-
-//                     result.Quality = Quality.SDTV;
-//                     return result;
-//                 }
-//             }
-
-//             //Anime Bluray matching
-//             if (AnimeBlurayRegex.Match(normalizedName).Success)
-//             {
-//                 if (resolution == Resolution._480p || resolution == Resolution._576p || normalizedName.Contains("480p"))
-//                 {
-//                     result.Quality = Quality.DVD;
-//                     return result;
-//                 }
-
-//                 if (resolution == Resolution._1080p || normalizedName.Contains("1080p"))
-//                 {
-//                     result.Quality = Quality.Bluray1080p;
-//                     return result;
-//                 }
-
-//                 result.Quality = Quality.Bluray720p;
-//                 return result;
-//             }
-
-//             if (resolution == Resolution._2160p)
-//             {
-//                 result.Quality = Quality.HDTV2160p;
-//                 return result;
-//             }
-
-//             if (resolution == Resolution._1080p)
-//             {
-//                 result.Quality = Quality.HDTV1080p;
-//                 return result;
-//             }
-
-//             if (resolution == Resolution._720p)
-//             {
-//                 result.Quality = Quality.HDTV720p;
-//                 return result;
-//             }
-
-//             if (resolution == Resolution._480p)
-//             {
-//                 result.Quality = Quality.SDTV;
-//                 return result;
-//             }
-
-//             if (codecRegex.Groups["x264"].Success)
-//             {
-//                 result.Quality = Quality.SDTV;
-//                 return result;
-//             }
-
-//             if (normalizedName.Contains("848x480"))
-//             {
-//                 if (normalizedName.Contains("dvd"))
-//                 {
-//                     result.Quality = Quality.DVD;
-//                 }
-
-//                 result.Quality = Quality.SDTV;
-//             }
-
-//             if (normalizedName.Contains("1280x720"))
-//             {
-//                 if (normalizedName.Contains("bluray"))
-//                 {
-//                     result.Quality = Quality.Bluray720p;
-//                 }
-
-//                 result.Quality = Quality.HDTV720p;
-//             }
-
-//             if (normalizedName.Contains("1920x1080"))
-//             {
-//                 if (normalizedName.Contains("bluray"))
-//                 {
-//                     result.Quality = Quality.Bluray1080p;
-//                 }
-
-//                 result.Quality = Quality.HDTV1080p;
-//             }
-
-//             if (normalizedName.Contains("bluray720p"))
-//             {
-//                 result.Quality = Quality.Bluray720p;
-//             }
-
-//             if (normalizedName.Contains("bluray1080p"))
-//             {
-//                 result.Quality = Quality.Bluray1080p;
-//             }
-
-//             var otherSourceMatch = OtherSourceMatch(normalizedName);
-
-//             if (otherSourceMatch != Quality.Unknown)
-//             {
-//                 result.Quality = otherSourceMatch;
-//             }
-
-//             //Based on extension
-//             if (result.Quality == Quality.Unknown && !name.ContainsInvalidPathChars())
-//             {
-//                 try
-//                 {
-//                     result.Quality = MediaFileExtensions.GetQualityForExtension(Path.GetExtension(name));
-//                     result.QualitySource = QualitySource.Extension;
-//                 }
-//                 catch (ArgumentException)
-//                 {
-//                     //Swallow exception for cases where string contains illegal
-//                     //path characters.
-//                 }
-//             }
-
-//             return result;
-//         }
-
-//         private static Resolution ParseResolution(string name)
-//         {
-//             var match = ResolutionRegex.Match(name);
-
-//             if (!match.Success) return Resolution.Unknown;
-//             if (match.Groups["_480p"].Success) return Resolution._480p;
-//             if (match.Groups["_576p"].Success) return Resolution._576p;
-//             if (match.Groups["_720p"].Success) return Resolution._720p;
-//             if (match.Groups["_1080p"].Success) return Resolution._1080p;
-//             if (match.Groups["_2160p"].Success) return Resolution._2160p;
-
-//             return Resolution.Unknown;
-//         }
-
-//         private static Quality OtherSourceMatch(string name)
-//         {
-//             var match = OtherSourceRegex.Match(name);
-
-//             if (!match.Success) return Quality.Unknown;
-//             if (match.Groups["sdtv"].Success) return Quality.SDTV;
-//             if (match.Groups["hdtv"].Success) return Quality.HDTV720p;
-
-//             return Quality.Unknown;
-//         }
-
-//         private static QualityModel ParseQualityModifiers(string name, string normalizedName)
-//         {
-//             var result = new QualityModel { Quality = Quality.Unknown };
-
-//             if (ProperRegex.IsMatch(normalizedName))
-//             {
-//                 result.Revision.Version = 2;
-//             }
-
-//             var versionRegexResult = VersionRegex.Match(normalizedName);
-
-//             if (versionRegexResult.Success)
-//             {
-//                 result.Revision.Version = Convert.ToInt32(versionRegexResult.Groups["version"].Value);
-//             }
-
-//             //TODO: re-enable this when we have a reliable way to determine real
-//             //TODO: Only treat it as a real if it comes AFTER the season/epsiode number
-//             var realRegexResult = RealRegex.Matches(name);
-
-//             if (realRegexResult.Count > 0)
-//             {
-//                 result.Revision.Real = realRegexResult.Count;
-//             }
-
-//             return result;
-//         }
-//     }
-
-//     public enum Resolution
-//     {
-//         _480p,
-//         _576p,
-//         _720p,
-//         _1080p,
-//         _2160p,
-//         Unknown
-//     }
-// }
+import (
+	"log"
+	"strconv"
+	"strings"
+
+	"github.com/dlclark/regexp2"
+)
+
+var SourceRegex = regexp2.MustCompile(`\b(?:
+	(?<bluray>BluRay|Blu-Ray|HDDVD|BD)|
+	(?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD|[. ]WEB[. ](?:[xh]26[45]|DD5[. ]1)|\d+0p[. ]WEB[. ])|
+	(?<hdtv>HDTV)|
+	(?<bdrip>BDRip)|
+	(?<brrip>BRRip)|
+	(?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|
+	(?<dsr>WS[-_. ]DSR|DSR)|
+	(?<pdtv>PDTV)|
+	(?<sdtv>SDTV)|
+	(?<tvrip>TVRip)
+	)\b`,
+	regexp2.Compiled|regexp2.IgnoreCase|regexp2.IgnorePatternWhitespace)
+
+var RawHDRegex = regexp2.MustCompile(`\b(?<rawhd>RawHD|1080i[-_. ]HDTV|Raw[-_. ]HD|MPEG[-_. ]?2)\b`,
+	regexp2.Compiled|regexp2.IgnoreCase)
+
+var ProperRegex = regexp2.MustCompile(`\b(?<proper>proper|repack|rerip)\b`,
+	regexp2.Compiled|regexp2.IgnoreCase)
+
+var VersionRegex = regexp2.MustCompile(`\dv(?<version>\d)\b|\[v(?<version>\d)\]`,
+	regexp2.Compiled|regexp2.IgnoreCase)
+
+var RealRegex = regexp2.MustCompile(`\b(?<real>REAL)\b`,
+	regexp2.Compiled)
+
+var ResolutionRegex = regexp2.MustCompile(`\b(?:(?<_480p>480p|640x480|848x480)|(?<_576p>576p)|(?<_720p>720p|1280x720)|(?<_1080p>1080p|1920x1080)|(?<_2160p>2160p))\b`,
+	regexp2.Compiled|regexp2.IgnoreCase)
+
+var CodecRegex = regexp2.MustCompile(`\b(?:(?<x264>x264)|(?<h264>h264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))\b`,
+	regexp2.Compiled|regexp2.IgnoreCase)
+
+var OtherSourceRegex = regexp2.MustCompile(`(?<hdtv>HD[-_. ]TV)|(?<sdtv>SD[-_. ]TV)`, regexp2.Compiled|regexp2.IgnoreCase)
+
+var AnimeBlurayRegex = regexp2.MustCompile(`bd(?:720|1080)|(?<=[-_. (\[])bd(?=[-_. )\]])`, regexp2.Compiled|regexp2.IgnoreCase)
+
+var HighDefPdtvRegex = regexp2.MustCompile(`hr[-_. ]ws`, regexp2.Compiled|regexp2.IgnoreCase)
+
+func ParseQuality(name string) QualityModel {
+	log.Printf("Trying to parse quality for %q", name)
+
+	normalizedName := strings.TrimSpace(name)
+	normalizedName = strings.Replace(normalizedName, "_", " ", -1)
+	normalizedName = strings.TrimSpace(normalizedName)
+	normalizedName = strings.ToLower(normalizedName)
+
+	result := parseQualityModifiers(name, normalizedName)
+
+	if match, _ := RawHDRegex.FindStringMatch(normalizedName); match != nil {
+		result.Quality = QualityRAWHD
+		return result
+	}
+
+	sourceMatch, _ := SourceRegex.FindStringMatch(normalizedName)
+	resolution := ParseResolution(normalizedName)
+	codecRegex, _ := CodecRegex.FindStringMatch(normalizedName)
+
+	if sourceMatch != nil {
+		if sourceMatch.GroupByName("bluray") != nil {
+			if codecRegex != nil && (codecRegex.GroupByName("xvid") != nil || codecRegex.GroupByName("divx") != nil) {
+				result.Quality = QualityDVD
+				return result
+			}
+
+			if resolution == Resolution2160p {
+				result.Quality = QualityBluray2160p
+				return result
+			}
+
+			if resolution == Resolution1080p {
+				result.Quality = QualityBluray1080p
+				return result
+			}
+
+			if resolution == Resolution480p || resolution == Resolution576p {
+				result.Quality = QualityDVD
+				return result
+			}
+
+			result.Quality = QualityBluray720p
+			return result
+		}
+
+		if sourceMatch.GroupByName("webdl") != nil {
+			if resolution == Resolution2160p {
+				result.Quality = QualityWEBDL2160p
+				return result
+			}
+
+			if resolution == Resolution1080p {
+				result.Quality = QualityWEBDL1080p
+				return result
+			}
+
+			if resolution == Resolution720p {
+				result.Quality = QualityWEBDL720p
+				return result
+			}
+
+			if strings.Contains(name, "[WEBDL]") {
+				result.Quality = QualityWEBDL720p
+				return result
+			}
+
+			result.Quality = QualityWEBDL480p
+			return result
+		}
+
+		if sourceMatch.GroupByName("hdtv") != nil {
+			if resolution == Resolution2160p {
+				result.Quality = QualityHDTV2160p
+				return result
+			}
+
+			if resolution == Resolution1080p {
+				result.Quality = QualityHDTV1080p
+				return result
+			}
+
+			if resolution == Resolution720p {
+				result.Quality = QualityHDTV720p
+				return result
+			}
+
+			if strings.Contains(name, "[HDTV]") {
+				result.Quality = QualityHDTV720p
+				return result
+			}
+
+			result.Quality = QualitySDTV
+			return result
+		}
+
+		if sourceMatch.GroupByName("bdrip") != nil || sourceMatch.GroupByName("brrip") != nil {
+			switch resolution {
+			case Resolution720p:
+				result.Quality = QualityBluray720p
+				return result
+			case Resolution1080p:
+				result.Quality = QualityBluray1080p
+				return result
+			default:
+				result.Quality = QualityDVD
+				return result
+			}
+		}
+
+		if sourceMatch.GroupByName("dvd") != nil {
+			result.Quality = QualityDVD
+			return result
+		}
+
+		if sourceMatch.GroupByName("pdtv") != nil ||
+			sourceMatch.GroupByName("sdtv") != nil ||
+			sourceMatch.GroupByName("dsr") != nil ||
+			sourceMatch.GroupByName("tvrip") != nil {
+			if match, _ := HighDefPdtvRegex.FindStringMatch(normalizedName); match != nil {
+				result.Quality = QualityHDTV720p
+				return result
+			}
+
+			result.Quality = QualitySDTV
+			return result
+		}
+	}
+
+	//Anime Bluray matching
+	if match, _ := AnimeBlurayRegex.FindStringMatch(normalizedName); match != nil {
+		if resolution == Resolution480p || resolution == Resolution576p || strings.Contains(normalizedName, "480p") {
+			result.Quality = QualityDVD
+			return result
+		}
+
+		if resolution == Resolution1080p || strings.Contains(normalizedName, "1080p") {
+			result.Quality = QualityBluray1080p
+			return result
+		}
+
+		result.Quality = QualityBluray720p
+		return result
+	}
+
+	if resolution == Resolution2160p {
+		result.Quality = QualityHDTV2160p
+		return result
+	}
+
+	if resolution == Resolution1080p {
+		result.Quality = QualityHDTV1080p
+		return result
+	}
+
+	if resolution == Resolution720p {
+		result.Quality = QualityHDTV720p
+		return result
+	}
+
+	if resolution == Resolution480p {
+		result.Quality = QualitySDTV
+		return result
+	}
+
+	if codecRegex != nil && codecRegex.GroupByName("x264") != nil {
+		result.Quality = QualitySDTV
+		return result
+	}
+
+	if strings.Contains(normalizedName, "848x480") {
+		if strings.Contains(normalizedName, "dvd") {
+			result.Quality = QualityDVD
+		}
+
+		result.Quality = QualitySDTV
+	}
+
+	if strings.Contains(normalizedName, "1280x720") {
+		if strings.Contains(normalizedName, "bluray") {
+			result.Quality = QualityBluray720p
+		}
+
+		result.Quality = QualityHDTV720p
+	}
+
+	if strings.Contains(normalizedName, "1920x1080") {
+		if strings.Contains(normalizedName, "bluray") {
+			result.Quality = QualityBluray1080p
+		}
+
+		result.Quality = QualityHDTV1080p
+	}
+
+	if strings.Contains(normalizedName, "bluray720p") {
+		result.Quality = QualityBluray720p
+	}
+
+	if strings.Contains(normalizedName, "bluray1080p") {
+		result.Quality = QualityBluray1080p
+	}
+
+	if otherSourceMatch := otherSourceMatch(normalizedName); otherSourceMatch != QualityUnknown {
+		result.Quality = otherSourceMatch
+	}
+
+	//Based on extension
+	// if result.Quality == QualityUnknown && !name.ContainsInvalidPathChars() {
+	// 	// try
+	// 	// {
+	// 	result.Quality = MediaFileExtensions.GetQualityForExtension(Path.GetExtension(name))
+	// 	result.QualitySource = QualitySource.Extension
+	// 	// }
+	// 	// catch (ArgumentException)
+	// 	// {
+	// 	//Swallow exception for cases where string contains illegal
+	// 	//path characters.
+	// 	// }
+	// }
+
+	return result
+}
+
+func ParseResolution(name string) Resolution {
+	match, _ := ResolutionRegex.FindStringMatch(name)
+
+	if match == nil {
+		return ResolutionUnknown
+	}
+	if match.GroupByName("_480p") != nil {
+		return Resolution480p
+	}
+
+	if match.GroupByName("_576p") != nil {
+		return Resolution576p
+	}
+
+	if match.GroupByName("_720p") != nil {
+		return Resolution720p
+	}
+
+	if match.GroupByName("_1080p") != nil {
+		return Resolution1080p
+	}
+
+	if match.GroupByName("_2160p") != nil {
+		return Resolution2160p
+	}
+
+	return ResolutionUnknown
+}
+
+func otherSourceMatch(name string) Quality {
+	match, _ := OtherSourceRegex.FindStringMatch(name)
+	if match == nil {
+		return QualityUnknown
+	}
+	if match.GroupByName("sdtv") != nil {
+		return QualitySDTV
+	}
+	if match.GroupByName("hdtv") != nil {
+		return QualityHDTV720p
+	}
+
+	return QualityUnknown
+}
+
+func parseQualityModifiers(name string, normalizedName string) QualityModel {
+	result := QualityModel{Quality: QualityUnknown}
+
+	if m, _ := ProperRegex.FindStringMatch(normalizedName); m != nil {
+		result.Revision.Version = 2
+	}
+
+	versionRegexResult, _ := VersionRegex.FindStringMatch(normalizedName)
+	if versionRegexResult != nil {
+		result.Revision.Version, _ = strconv.Atoi(versionRegexResult.GroupByName("version").String())
+	}
+
+	//TODO: re-enable this when we have a reliable way to determine real
+	//TODO: Only treat it as a real if it comes AFTER the season/epsiode number
+	// var realRegexResult = RealRegex.Matches(name)
+	// if realRegexResult.Count > 0 {
+	// 	result.Revision.Real = realRegexResult.Count
+	// }
+
+	return result
+}
+
+type Resolution string
+
+const (
+	Resolution480p    Resolution = "480p"
+	Resolution576p    Resolution = "576p"
+	Resolution720p    Resolution = "720p"
+	Resolution1080p   Resolution = "1080p"
+	Resolution2160p   Resolution = "2160p"
+	ResolutionUnknown Resolution = "unknown"
+)

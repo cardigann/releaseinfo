@@ -1,95 +1,64 @@
 package releaseinfo
 
-// using System;
-// using System.Linq;
-// using NzbDrone.Common.Extensions;
-// using NzbDrone.Core.Qualities;
+import (
+	"fmt"
+	"strings"
 
-// namespace NzbDrone.Core.Parser.Model
-// {
-//     public class ParsedEpisodeInfo
-//     {
-//         public string SeriesTitle { get; set; }
-//         public SeriesTitleInfo SeriesTitleInfo { get; set; }
-//         public QualityModel Quality { get; set; }
-//         public int SeasonNumber { get; set; }
-//         public int[] EpisodeNumbers { get; set; }
-//         public int[] AbsoluteEpisodeNumbers { get; set; }
-//         public string AirDate { get; set; }
-//         public Language Language { get; set; }
-//         public bool FullSeason { get; set; }
-//         public bool Special { get; set; }
-//         public string ReleaseGroup { get; set; }
-//         public string ReleaseHash { get; set; }
+	"golang.org/x/text/language"
+)
 
-//         public ParsedEpisodeInfo()
-//         {
-//             EpisodeNumbers = new int[0];
-//             AbsoluteEpisodeNumbers = new int[0];
-//         }
+type ParsedEpisodeInfo struct {
+	SeriesTitle            string
+	SeriesTitleInfo        SeriesTitleInfo
+	Quality                QualityModel
+	SeasonNumber           int
+	EpisodeNumbers         []int
+	AbsoluteEpisodeNumbers []int
+	AirDate                string
+	Language               language.Tag
+	FullSeason             bool
+	Special                bool
+	ReleaseGroup           string
+	ReleaseHash            string
+}
 
-//         public bool IsDaily
-//         {
-//             get
-//             {
-//                 return !string.IsNullOrWhiteSpace(AirDate);
-//             }
+func NewParsedEpisodeInfo() ParsedEpisodeInfo {
+	return ParsedEpisodeInfo{
+		EpisodeNumbers:         []int{},
+		AbsoluteEpisodeNumbers: []int{},
+	}
+}
 
-//             //This prevents manually downloading a release from blowing up in mono
-//             //TODO: Is there a better way?
-//             private set { }
-//         }
+func (pei ParsedEpisodeInfo) IsDaily() bool {
+	return strings.TrimSpace(pei.AirDate) != ""
+}
 
-//         public bool IsAbsoluteNumbering
-//         {
-//             get
-//             {
-//                 return AbsoluteEpisodeNumbers.Any();
-//             }
+func (pei ParsedEpisodeInfo) IsAbsoluteNumbering() bool {
+	return len(pei.AbsoluteEpisodeNumbers) > 0
+}
 
-//             //This prevents manually downloading a release from blowing up in mono
-//             //TODO: Is there a better way?
-//             private set { }
-//         }
+func (pei ParsedEpisodeInfo) IsPossibleSpecialEpisode() bool {
+	// if we don't have eny episode numbers we are likely a special episode and need to do a search by episode title
+	return strings.TrimSpace(pei.AirDate) != "" &&
+		strings.TrimSpace(pei.SeriesTitle) != "" &&
+		(len(pei.EpisodeNumbers) == 0 || pei.SeasonNumber == 0) ||
+		(strings.TrimSpace(pei.SeriesTitle) != "" && pei.Special)
+}
 
-//         public bool IsPossibleSpecialEpisode
-//         {
-//             get
-//             {
-//                 // if we don't have eny episode numbers we are likely a special episode and need to do a search by episode title
-//                 return (AirDate.IsNullOrWhiteSpace() &&
-//                        SeriesTitle.IsNullOrWhiteSpace() &&
-//                        (EpisodeNumbers.Length == 0 || SeasonNumber == 0) ||
-//                        !SeriesTitle.IsNullOrWhiteSpace() && Special);
-//             }
+func (pei ParsedEpisodeInfo) String() string {
+	episodeString := "[Unknown Episode]"
 
-//             //This prevents manually downloading a release from blowing up in mono
-//             //TODO: Is there a better way?
-//             private set {}
-//         }
+	if pei.IsDaily() && len(pei.EpisodeNumbers) == 0 {
+		episodeString = fmt.Sprintf("%s", pei.AirDate)
+	} else if pei.FullSeason {
+		episodeString = fmt.Sprintf("Season {0:00}", pei.SeasonNumber)
+	} else if pei.EpisodeNumbers != nil && len(pei.EpisodeNumbers) > 0 {
+		panic("fix me")
+		// episodeString = string.Format("S{0:00}E{1}", SeasonNumber, string.Join("-", EpisodeNumbers.Select(c => c.ToString("00"))));
+	} else if pei.AbsoluteEpisodeNumbers != nil && len(pei.AbsoluteEpisodeNumbers) > 0 {
+		panic("fix me")
+		//episodeString = string.Format("{0}", string.Join("-", AbsoluteEpisodeNumbers.Select(c => c.ToString("000"))));
+	}
 
-//         public override string ToString()
-//         {
-//             string episodeString = "[Unknown Episode]";
-
-//             if (IsDaily && EpisodeNumbers.Empty())
-//             {
-//                 episodeString = string.Format("{0}", AirDate);
-//             }
-//             else if (FullSeason)
-//             {
-//                 episodeString = string.Format("Season {0:00}", SeasonNumber);
-//             }
-//             else if (EpisodeNumbers != null && EpisodeNumbers.Any())
-//             {
-//                 episodeString = string.Format("S{0:00}E{1}", SeasonNumber, string.Join("-", EpisodeNumbers.Select(c => c.ToString("00"))));
-//             }
-//             else if (AbsoluteEpisodeNumbers != null && AbsoluteEpisodeNumbers.Any())
-//             {
-//                 episodeString = string.Format("{0}", string.Join("-", AbsoluteEpisodeNumbers.Select(c => c.ToString("000"))));
-//             }
-
-//             return string.Format("{0} - {1} {2}", SeriesTitle, episodeString, Quality);
-//         }
-//     }
-// }
+	return fmt.Sprintf("{0} - {1} {2}", pei.SeriesTitle, episodeString, pei.Quality)
+}
