@@ -2,6 +2,7 @@
 
 import (
 	"log"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -65,11 +66,17 @@ func ParseQuality(name string) QualityModel {
 	resolution := ParseResolution(normalizedName)
 	codecRegex, _ := CodecRegex.FindStringMatch(normalizedName)
 
+	log.Printf("Resolution %v", resolution)
+	dumpGroups(sourceMatch)
+	dumpGroups(codecRegex)
+
 	if sourceMatch != nil {
-		if sourceMatch.GroupByName("bluray") != nil {
-			if codecRegex != nil && (codecRegex.GroupByName("xvid") != nil || codecRegex.GroupByName("divx") != nil) {
-				result.Quality = QualityDVD
-				return result
+		if hasGroup(sourceMatch, "bluray") {
+			if codecRegex != nil {
+				if hasGroup(codecRegex, "xvid") || hasGroup(codecRegex, "divx") {
+					result.Quality = QualityDVD
+					return result
+				}
 			}
 
 			if resolution == Resolution2160p {
@@ -91,7 +98,7 @@ func ParseQuality(name string) QualityModel {
 			return result
 		}
 
-		if sourceMatch.GroupByName("webdl") != nil {
+		if hasGroup(sourceMatch, "webdl") {
 			if resolution == Resolution2160p {
 				result.Quality = QualityWEBDL2160p
 				return result
@@ -116,7 +123,7 @@ func ParseQuality(name string) QualityModel {
 			return result
 		}
 
-		if sourceMatch.GroupByName("hdtv") != nil {
+		if hasGroup(sourceMatch, "hdtv") {
 			if resolution == Resolution2160p {
 				result.Quality = QualityHDTV2160p
 				return result
@@ -141,7 +148,7 @@ func ParseQuality(name string) QualityModel {
 			return result
 		}
 
-		if sourceMatch.GroupByName("bdrip") != nil || sourceMatch.GroupByName("brrip") != nil {
+		if hasGroup(sourceMatch, "bdrip") || hasGroup(sourceMatch, "brrip") {
 			switch resolution {
 			case Resolution720p:
 				result.Quality = QualityBluray720p
@@ -155,15 +162,15 @@ func ParseQuality(name string) QualityModel {
 			}
 		}
 
-		if sourceMatch.GroupByName("dvd") != nil {
+		if hasGroup(sourceMatch, "dvd") {
 			result.Quality = QualityDVD
 			return result
 		}
 
-		if sourceMatch.GroupByName("pdtv") != nil ||
-			sourceMatch.GroupByName("sdtv") != nil ||
-			sourceMatch.GroupByName("dsr") != nil ||
-			sourceMatch.GroupByName("tvrip") != nil {
+		if hasGroup(sourceMatch, "pdtv") ||
+			hasGroup(sourceMatch, "sdtv") ||
+			hasGroup(sourceMatch, "dsr") ||
+			hasGroup(sourceMatch, "tvrip") {
 			if match, _ := HighDefPdtvRegex.FindStringMatch(normalizedName); match != nil {
 				result.Quality = QualityHDTV720p
 				return result
@@ -210,7 +217,7 @@ func ParseQuality(name string) QualityModel {
 		return result
 	}
 
-	if codecRegex != nil && codecRegex.GroupByName("x264") != nil {
+	if codecRegex != nil && hasGroup(codecRegex, "x264") {
 		result.Quality = QualitySDTV
 		return result
 	}
@@ -252,45 +259,28 @@ func ParseQuality(name string) QualityModel {
 	}
 
 	//Based on extension
-	// if result.Quality == QualityUnknown && !name.ContainsInvalidPathChars() {
-	// 	// try
-	// 	// {
-	// 	result.Quality = MediaFileExtensions.GetQualityForExtension(Path.GetExtension(name))
-	// 	result.QualitySource = QualitySource.Extension
-	// 	// }
-	// 	// catch (ArgumentException)
-	// 	// {
-	// 	//Swallow exception for cases where string contains illegal
-	// 	//path characters.
-	// 	// }
-	// }
+	if result.Quality == QualityUnknown {
+		result.Quality = getQualityForExtension(filepath.Ext(name))
+		result.QualitySource = "extension"
+	}
 
 	return result
 }
 
 func ParseResolution(name string) Resolution {
+	log.Printf("Parsing resolution from %s", name)
 	match, _ := ResolutionRegex.FindStringMatch(name)
 
-	if match == nil {
-		return ResolutionUnknown
-	}
-	if match.GroupByName("_480p") != nil {
+	switch {
+	case hasGroup(match, "_480p"):
 		return Resolution480p
-	}
-
-	if match.GroupByName("_576p") != nil {
+	case hasGroup(match, "_576p"):
 		return Resolution576p
-	}
-
-	if match.GroupByName("_720p") != nil {
+	case hasGroup(match, "_720p"):
 		return Resolution720p
-	}
-
-	if match.GroupByName("_1080p") != nil {
+	case hasGroup(match, "_1080p"):
 		return Resolution1080p
-	}
-
-	if match.GroupByName("_2160p") != nil {
+	case hasGroup(match, "_2160p"):
 		return Resolution2160p
 	}
 
@@ -299,13 +289,11 @@ func ParseResolution(name string) Resolution {
 
 func otherSourceMatch(name string) Quality {
 	match, _ := OtherSourceRegex.FindStringMatch(name)
-	if match == nil {
-		return QualityUnknown
-	}
-	if match.GroupByName("sdtv") != nil {
+
+	switch {
+	case hasGroup(match, "sdtv"):
 		return QualitySDTV
-	}
-	if match.GroupByName("hdtv") != nil {
+	case hasGroup(match, "hdtv"):
 		return QualityHDTV720p
 	}
 

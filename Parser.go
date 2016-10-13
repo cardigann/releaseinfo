@@ -197,10 +197,10 @@ var RejectHashedReleasesRegex = []*regexp2.Regexp{
 	regexp2.MustCompile(`^[a-z]{12}\d{3}$`, regexp2.Compiled),
 
 	//Backup filename (Unknown origins)
-	regexp2.MustCompile(`^Backup_\d{5,}S\d{2}-\d{2}$"`, regexp2.Compiled),
+	regexp2.MustCompile(`^Backup_\d{5,}S\d{2}-\d{2}$`, regexp2.Compiled),
 
 	//123 - Started appearing December 2014
-	regexp2.MustCompile(`^123$"`, regexp2.Compiled),
+	regexp2.MustCompile(`^123$`, regexp2.Compiled),
 
 	//abc - Started appearing January 2015
 	regexp2.MustCompile(`^abc$`, regexp2.Compiled|regexp2.IgnoreCase),
@@ -267,24 +267,26 @@ var (
 
 var Numbers = []string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
 
+// ParsePath extracts episode info from a full path
 func ParsePath(path string) (*ParsedEpisodeInfo, error) {
-	fileInfo, err := ParseFileInfo(path)
-	if err != nil {
-		return nil, err
+	path = normalizePath(path)
+	name := filepath.Base(path)
+	dir := filepath.Base(filepath.Dir(path))
+	ext := filepath.Ext(path)
+
+	for _, test := range []string{
+		name,             // path name
+		dir + " " + name, // dirname + name of the file
+		dir + ext,        // dirname + extentions
+	} {
+		log.Printf("Trying to parse title using %s from path %s", test, path)
+		result, err := ParseTitle(test)
+		if err == nil {
+			return result, err
+		}
 	}
 
-	result, err := ParseTitle(fileInfo.Name)
-	if err != nil {
-		log.Printf("Attempting to parse episode info using directory and file names. %v", fileInfo.Directory.Name)
-		result, err = ParseTitle(fileInfo.Directory.Name + " " + fileInfo.Name)
-	}
-
-	if err != nil {
-		log.Printf("Attempting to parse episode info using directory name. %v", fileInfo.Directory.Name)
-		result, err = ParseTitle(fileInfo.Directory.Name + fileInfo.Extension)
-	}
-
-	return result, err
+	return nil, fmt.Errorf("Unable to parse path %s", path)
 }
 
 func ParseTitle(title string) (*ParsedEpisodeInfo, error) {
@@ -295,16 +297,10 @@ func ParseTitle(title string) (*ParsedEpisodeInfo, error) {
 	log.Printf("Parsing title %q", title)
 
 	if match, _ := ReversedTitleRegex.MatchString(title); match {
-		panic("WTF?")
-		// titleWithoutExtension := []rune(RemoveFileExtension(title))
+		titleWithoutExtension := removeFileExtension(title)
 
-		// // reverse the string
-		// for i, j := 0, len(titleWithoutExtension)-1; i < j; i, j = i+1, j-1 {
-		// 	titleWithoutExtension[i], titleWithoutExtension[j] = titleWithoutExtension[j], titleWithoutExtension[i]
-		// }
-
-		// title = string(titleWithoutExtension) + title.Substring(titleWithoutExtension.Length)
-		// log.Printf("Reversed name detected. Converted to '{0}'", title)
+		title = reverseString(titleWithoutExtension) + strings.TrimPrefix(title, titleWithoutExtension)
+		log.Printf("Reversed name detected. Converted to %q", title)
 	}
 
 	simpleTitle, err := SimpleTitleRegex.Replace(title, "", 0, -1)
@@ -462,22 +458,6 @@ func ParseReleaseGroup(title string) string {
 	return ""
 }
 
-func removeFileExtension(title string) string {
-	result, err := FileExtensionRegex.ReplaceFunc(title, func(m regexp2.Match) string {
-		ext := strings.ToLower(filepath.Ext(m.String()))
-		if _, match := mediaFileExtensions[ext]; match {
-			return ""
-		}
-		return m.String()
-	}, 0, -1)
-
-	if err != nil {
-		return result
-	}
-
-	return title
-}
-
 func getSeriesTitleInfo(title string) SeriesTitleInfo {
 	seriesTitleInfo := SeriesTitleInfo{
 		Title: title,
@@ -509,13 +489,19 @@ func getMatchGroupCaptures(m *regexp2.Match, group string) []regexp2.Capture {
 }
 
 func hasGroup(m *regexp2.Match, group string) bool {
-	if result := m.GroupByName(group); result != nil && result.Captures != nil {
+	if m == nil {
+		return false
+	}
+	if result := m.GroupByName(group); result != nil && result.Length > 0 {
 		return true
 	}
 	return false
 }
 
 func dumpGroups(m *regexp2.Match) {
+	if m == nil {
+		return
+	}
 	for _, group := range m.Groups() {
 		log.Printf("Group %s [%d]: %s", group.Name, group.Length, group.Capture.String())
 	}
@@ -667,7 +653,7 @@ func validateBeforeParsing(title string) bool {
 	var titleWithoutExtension = removeFileExtension(title)
 
 	for _, regex := range RejectHashedReleasesRegex {
-		if m, _ := regex.MatchString(titleWithoutExtension); m {
+		if m, _ := regex.FindStringMatch(titleWithoutExtension); m != nil {
 			log.Printf("Rejected Hashed Release Title: " + title)
 			return false
 		}

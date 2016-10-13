@@ -1,5 +1,37 @@
 package releaseinfo
 
+import (
+	"path/filepath"
+	"strings"
+
+	"github.com/dlclark/regexp2"
+)
+
+func removeFileExtension(title string) string {
+	result, err := FileExtensionRegex.ReplaceFunc(title, func(m regexp2.Match) string {
+		ext := strings.ToLower(filepath.Ext(m.String()))
+		if _, match := mediaFileExtensions[ext]; match {
+			return ""
+		}
+		return m.String()
+	}, 0, -1)
+
+	if err != nil {
+		return title
+	}
+
+	return result
+}
+
+func normalizePath(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '/' || r == '\\' {
+			return filepath.Separator
+		}
+		return r
+	}, s)
+}
+
 var mediaFileExtensions = map[string]Quality{
 	".webm":   QualityUnknown,
 	".m4v":    QualitySDTV,
@@ -49,19 +81,10 @@ var mediaFileExtensions = map[string]Quality{
 	".m2ts":   QualityBluray720p,
 }
 
-//         public static HashSet<string> Extensions
-//         {
-//             get { return new HashSet<string>(_fileExtensions.Keys); }
-//         }
-
-//         public static Quality GetQualityForExtension(string extension)
-//         {
-//             if (_fileExtensions.ContainsKey(extension))
-//             {
-//                 return _fileExtensions[extension];
-//             }
-
-//             return QualityUnknown;
-//         }
-//     }
-// }
+func getQualityForExtension(ext string) Quality {
+	q, ok := mediaFileExtensions[ext]
+	if !ok {
+		return QualityUnknown
+	}
+	return q
+}

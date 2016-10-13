@@ -256,3 +256,42 @@ func TestNotParseSeasonExtrasAndSubpacks(t *testing.T) {
 			fmt.Sprintf("Row %d should have a nil result", idx+1))
 	}
 }
+
+func TestParsingHashedReleases(t *testing.T) {
+	for idx, test := range []struct {
+		path, expectedTitle  string
+		expectedQuality      Quality
+		expectedReleaseGroup string
+	}{
+		{`C:\Test\Some.Hashed.Release.S01E01.720p.WEB-DL.AAC2.0.H.264-Mercury\0e895c37245186812cb08aab1529cf8ee389dd05.mkv`,
+			"Some Hashed Release", QualityWEBDL720p, "Mercury"},
+		{`C:\Test\0e895c37245186812cb08aab1529cf8ee389dd05\Some.Hashed.Release.S01E01.720p.WEB-DL.AAC2.0.H.264-Mercury.mkv`,
+			"Some Hashed Release", QualityWEBDL720p, "Mercury"},
+		{`C:\Test\Fake.Dir.S01E01-Test\yrucreM-462.H.0.2CAA.LD-BEW.p027.10E10S.esaeleR.dehsaH.emoS.mkv`,
+			"Some Hashed Release", QualityWEBDL720p, "Mercury"},
+		{`C:\Test\Fake.Dir.S01E01-Test\yrucreM-LN 1.5DD LD-BEW P0801 10E10S esaeleR dehsaH emoS.mkv`,
+			"Some Hashed Release", QualityWEBDL1080p, "Mercury"},
+		{`C:\Test\Weeds.S01E10.DVDRip.XviD-SONARR\AHFMZXGHEWD660.mkv`,
+			"Weeds", QualityDVD, "SONARR"},
+		{`C:\Test\Deadwood.S02E12.1080p.BluRay.x264-SONARR\Backup_72023S02-12.mkv`,
+			"Deadwood", QualityBluray1080p, "SONARR"},
+		{`C:\Test\Grimm S04E08 Chupacabra 720p WEB-DL DD5 1 H 264-ECI\123.mkv`,
+			"Grimm", QualityWEBDL720p, "ECI"},
+		{`C:\Test\Grimm S04E08 Chupacabra 720p WEB-DL DD5 1 H 264-ECI\abc.mkv`,
+			"Grimm", QualityWEBDL720p, "ECI"},
+		{`C:\Test\Grimm S04E08 Chupacabra 720p WEB-DL DD5 1 H 264-ECI\b00bs.mkv`,
+			"Grimm", QualityWEBDL720p, "ECI"},
+		{`C:\Test\The.Good.Wife.S02E23.720p.HDTV.x264-NZBgeek/cgajsofuejsa501.mkv`,
+			"The Good Wife", QualityHDTV720p, "NZBgeek"},
+	} {
+		result, err := ParsePath(test.path)
+
+		require.NoError(t, err)
+		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+		require.Equal(t, test.expectedQuality, result.Quality.Quality,
+			fmt.Sprintf("Row %d should have correct quality", idx+1))
+		require.Equal(t, test.expectedReleaseGroup, result.ReleaseGroup,
+			fmt.Sprintf("Row %d should have correct quality", idx+1))
+	}
+}

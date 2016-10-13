@@ -3,8 +3,9 @@ package releaseinfo
 import "fmt"
 
 type QualityModel struct {
-	Quality  Quality
-	Revision Revision
+	Quality       Quality
+	Revision      Revision
+	QualitySource string
 }
 
 func (qm QualityModel) String() string {

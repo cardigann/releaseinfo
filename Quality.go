@@ -5,6 +5,10 @@ type Quality struct {
 	Name string
 }
 
+func (q Quality) String() string {
+	return q.Name
+}
+
 var (
 	QualityUnknown     = Quality{0, "Unknown"}
 	QualitySDTV        = Quality{1, "SDTV"}
