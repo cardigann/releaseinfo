@@ -671,3 +671,55 @@ func TestShouldNotParseDailyEpisodesWithFutureTimes(t *testing.T) {
 		require.Error(t, err, "Dates in future should fail")
 	}
 }
+
+func TestParsingReleaseGroup(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle    string
+		releaseGroup string
+	}{
+		{"Castle.2009.S01E14.English.HDTV.XviD-LOL", "LOL"},
+		{"Castle 2009 S01E14 English HDTV XviD LOL", ""},
+		{"Acropolis Now S05 EXTRAS DVDRip XviD RUNNER", ""},
+		{"Punky.Brewster.S01.EXTRAS.DVDRip.XviD-RUNNER", "RUNNER"},
+		{"2020.NZ.2011.12.02.PDTV.XviD-C4TV", "C4TV"},
+		{"The.Office.S03E115.DVDRip.XviD-OSiTV", "OSiTV"},
+		{"The Office - S01E01 - Pilot [HTDV-480p]", ""},
+		{"The Office - S01E01 - Pilot [HTDV-720p]", ""},
+		{"The Office - S01E01 - Pilot [HTDV-1080p]", ""},
+		{"The.Walking.Dead.S04E13.720p.WEB-DL.AAC2.0.H.264-Cyphanix", "Cyphanix"},
+		{"Arrow.S02E01.720p.WEB-DL.DD5.1.H.264.mkv", ""},
+		{"Series Title S01E01 Episode Title", ""},
+		{"The Colbert Report - 2014-06-02 - Thomas Piketty.mkv", ""},
+		{"Real Time with Bill Maher S12E17 May 23, 2014.mp4", ""},
+		{"Reizen Waes - S01E08 - Transistri\u00EB, Zuid-Osseti\u00EB en Abchazi\u00EB SDTV.avi", ""},
+		{"Simpsons 10x11 - Wild Barts Cant Be Broken [rl].avi", ""},
+		{"[ www.Torrenting.com ] - Revenge.S03E14.720p.HDTV.X264-DIMENSION", "DIMENSION"},
+		{"Seed S02E09 HDTV x264-2HD [eztv]-[rarbg.com]", "2HD"},
+		{"7s-atlantis-s02e01-720p.mkv", ""},
+
+		// shouldn't include language
+		{"Marvels.Daredevil.S02E04.720p.WEBRip.x264-SKGTV English", "SKGTV"},
+		{"Marvels.Daredevil.S02E04.720p.WEBRip.x264-SKGTV_English", "SKGTV"},
+		{"Marvels.Daredevil.S02E04.720p.WEBRip.x264-SKGTV.English", "SKGTV"},
+
+		// shouldn't include repost
+		{"The.Longest.Mystery.S02E04.720p.WEB-DL.AAC2.0.H.264-EVL-RP", "EVL"},
+		{"The.Longest.Mystery.S02E04.720p.WEB-DL.AAC2.0.H.264-EVL-RP-RP", "EVL"},
+		{"The.Longest.Mystery.S02E04.720p.WEB-DL.AAC2.0.H.264-EVL-Obfuscated", "EVL"},
+		{"Lost.S04E04.720p.BluRay.x264-xHD-NZBgeek", "xHD"},
+		{"Blue.Bloods.S05E11.720p.HDTV.X264-DIMENSION-NZBgeek", "DIMENSION"},
+		{"Lost.S04E04.720p.BluRay.x264-xHD-1", "xHD"},
+		{"Blue.Bloods.S05E11.720p.HDTV.X264-DIMENSION-1", "DIMENSION"},
+		{"saturday.night.live.s40e11.kevin.hart_sia.720p.hdtv.x264-w4f-sample.mkv", "w4f"},
+
+		// anime release groups
+		{"[FFF] Invaders of the Rokujouma!! - S01E11 - Someday, With Them", "FFF"},
+		{"[HorribleSubs] Invaders of the Rokujouma!! - S01E12 - Invasion Going Well!!", "HorribleSubs"},
+		{"[Anime-Koi] Barakamon - S01E06 - Guys From Tokyo", "Anime-Koi"},
+		{"[Anime-Koi] Barakamon - S01E07 - A High-Grade Fish", "Anime-Koi"},
+		{"[Anime-Koi] Kami-sama Hajimemashita 2 - 01 [h264-720p][28D54E2C]", "Anime-Koi"},
+	} {
+		require.Equal(t, test.releaseGroup, ParseReleaseGroup(test.postTitle),
+			fmt.Sprintf("Row %d %q should have the correct release group", idx+1, test.postTitle))
+	}
+}

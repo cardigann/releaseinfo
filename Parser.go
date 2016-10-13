@@ -433,15 +433,13 @@ func ParseReleaseGroup(title string) string {
 	title = optionalReplace(DuplicateSpacesRegex, title, " ")
 	title = optionalReplace(WebsitePrefixRegex, title, " ")
 
-	animeMatch, err := AnimeReleaseGroupRegex.FindStringMatch(title)
-	if err != nil {
+	if animeMatch, _ := AnimeReleaseGroupRegex.FindStringMatch(title); animeMatch != nil {
 		return animeMatch.GroupByName("subgroup").String()
 	}
 
 	title = optionalReplace(CleanReleaseGroupRegex, title, "")
 
-	match, err := ReleaseGroupRegex.FindStringMatch(title)
-	if match != nil {
+	if match, _ := ReleaseGroupRegex.FindStringMatch(title); match != nil {
 		var releaseGroupCaptures = getMatchGroupCaptures(match, "releasegroup")
 
 		if len(releaseGroupCaptures) > 0 {

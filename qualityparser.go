@@ -88,8 +88,6 @@ func ParseQuality(name string) QualityModel {
 
 	result := parseQualityModifiers(name, normalizedName)
 
-	log.Printf("Quality Modifiers: %v", result)
-
 	if match, _ := RawHDRegex.FindStringMatch(normalizedName); match != nil {
 		result.Quality = QualityRAWHD
 		return result
@@ -98,9 +96,6 @@ func ParseQuality(name string) QualityModel {
 	sourceMatches := findSourceMatches(normalizedName)
 	resolution := ParseResolution(normalizedName)
 	codecRegex, _ := CodecRegex.FindStringMatch(normalizedName)
-
-	log.Printf("Resolution %v", resolution)
-	log.Printf("Source matches %v", sourceMatches)
 
 	if len(sourceMatches) > 0 {
 		if sourceMatches.Has("bluray") {
@@ -211,8 +206,6 @@ func ParseQuality(name string) QualityModel {
 			result.Quality = QualitySDTV
 			return result
 		}
-	} else {
-		log.Printf("No source match found")
 	}
 
 	//Anime Bluray matching
@@ -302,7 +295,6 @@ func ParseQuality(name string) QualityModel {
 }
 
 func ParseResolution(name string) Resolution {
-	log.Printf("Parsing resolution from %s", name)
 	match, _ := ResolutionRegex.FindStringMatch(name)
 
 	switch {
