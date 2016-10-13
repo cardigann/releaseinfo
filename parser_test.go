@@ -767,3 +767,35 @@ func TestParsingPath(t *testing.T) {
 			fmt.Sprintf("Row %d should not be a full season", idx+1))
 	}
 }
+
+func TestParsigAnimeMetadata(t *testing.T) {
+	for idx, test := range []struct {
+		title          string
+		subgroup, hash string
+	}{
+		{"[SubDESU]_High_School_DxD_07_(1280x720_x264-AAC)_[6B7FD717]", "SubDESU", "6B7FD717"},
+		{"[Chihiro]_Working!!_-_06_[848x480_H.264_AAC][859EEAFA]", "Chihiro", "859EEAFA"},
+		{"[Underwater]_Rinne_no_Lagrange_-_12_(720p)_[5C7BC4F9]", "Underwater", "5C7BC4F9"},
+		{"[HorribleSubs]_Hunter_X_Hunter_-_33_[720p]", "HorribleSubs", ""},
+		{"[HorribleSubs] Tonari no Kaibutsu-kun - 13 [1080p].mkv", "HorribleSubs", ""},
+		{"[Doremi].Yes.Pretty.Cure.5.Go.Go!.31.[1280x720].[C65D4B1F].mkv", "Doremi", "C65D4B1F"},
+		{"[Doremi].Yes.Pretty.Cure.5.Go.Go!.31.[1280x720].[C65D4B1F]", "Doremi", "C65D4B1F"},
+		{"[Doremi].Yes.Pretty.Cure.5.Go.Go!.31.[1280x720].mkv", "Doremi", ""},
+		{"[K-F] One Piece 214", "K-F", ""},
+		{"[K-F] One Piece S10E14 214", "K-F", ""},
+		{"[K-F] One Piece 10x14 214", "K-F", ""},
+		{"[K-F] One Piece 214 10x14", "K-F", ""},
+		{"Bleach - 031 - The Resolution to Kill [Lunar].avi", "Lunar", ""},
+		{"[ACX]Hack Sign 01 Role Play [Kosaka] [9C57891E].mkv", "ACX", "9C57891E"},
+		{"[S-T-D] Soul Eater Not! - 06 (1280x720 10bit AAC) [59B3F2EA].mkv", "S-T-D", "59B3F2EA"},
+	} {
+		result, err := ParseTitle(test.title)
+
+		require.NoError(t, err,
+			fmt.Sprintf("Row %d should have no error", idx+1))
+		require.Equal(t, test.subgroup, result.ReleaseGroup,
+			fmt.Sprintf("Row %d should have correct release group", idx+1))
+		require.Equal(t, test.hash, result.ReleaseHash,
+			fmt.Sprintf("Row %d should have correct release hash", idx+1))
+	}
+}
