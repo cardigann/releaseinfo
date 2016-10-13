@@ -21,6 +21,12 @@ type ParsedEpisodeInfo struct {
 	ReleaseHash            string
 }
 
+type SeriesTitleInfo struct {
+	Title            string
+	TitleWithoutYear string
+	Year             int
+}
+
 func NewParsedEpisodeInfo() ParsedEpisodeInfo {
 	return ParsedEpisodeInfo{
 		EpisodeNumbers:         []int{},
