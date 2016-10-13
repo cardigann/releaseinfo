@@ -521,6 +521,10 @@ func (mc *matchCollection) Next() error {
 	return nil
 }
 
+func newAirDate(year, month, day int) time.Time {
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+}
+
 func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 	seriesName := getMatchGroupString(col.Match, "title")
 	seriesName = strings.Replace(seriesName, "_", " ", -1)
@@ -574,6 +578,8 @@ func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 				first, _ := parseNumber(episodeCaptures[0].String())
 				last, _ := parseNumber(episodeCaptures[len(episodeCaptures)-1].String())
 
+				log.Printf("Found episode %d - %d", first, last)
+
 				if first > last {
 					return nil, nil
 				}
@@ -584,8 +590,10 @@ func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 			}
 
 			if len(absoluteEpisodeCaptures) > 0 {
-				first, _ := strconv.Atoi(absoluteEpisodeCaptures[0].String())
-				last, _ := strconv.Atoi(absoluteEpisodeCaptures[len(absoluteEpisodeCaptures)-1].String())
+				first, _ := parseNumber(absoluteEpisodeCaptures[0].String())
+				last, _ := parseNumber(absoluteEpisodeCaptures[len(absoluteEpisodeCaptures)-1].String())
+
+				log.Printf("Found absolute episode %d - %d", first, last)
 
 				if first > last {
 					return nil, nil
@@ -630,17 +638,18 @@ func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 			airMonth = tempDay
 		}
 
-		airDate, err := time.Parse("2006-1-2", fmt.Sprintf("%d-%d-%d", airYear, airMonth, airDay))
-		if err != nil {
-			return nil, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
-		}
+		airDate := newAirDate(airYear, airMonth, airDay)
 
 		//Check if episode is in the future (most likely a parse error)
 		if airDate.After(time.Now()) {
 			return nil, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
 		}
 
-		result.AirDate = airDate.Format(airDateFormat)
+		result = &ParsedEpisodeInfo{
+			EpisodeNumbers:         []int{},
+			AbsoluteEpisodeNumbers: []int{},
+			AirDate:                airDate.Format(airDateFormat),
+		}
 	}
 
 	result.SeriesTitle = seriesName
