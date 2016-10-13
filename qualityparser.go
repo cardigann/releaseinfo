@@ -1,7 +1,6 @@
 ﻿package releaseinfo
 
 import (
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -75,7 +74,7 @@ func findSourceMatches(name string) sourceMatches {
 }
 
 func ParseQuality(name string) QualityModel {
-	log.Printf("Parsing quality for %q", name)
+	// log.Printf("Parsing quality for %q", name)
 
 	normalizedName := removeSpace(name)
 	normalizedName = strings.Replace(normalizedName, "_", " ", -1)
@@ -327,15 +326,12 @@ func parseQualityModifiers(name string, normalizedName string) QualityModel {
 
 	versionRegexResult, _ := VersionRegex.FindStringMatch(normalizedName)
 	if versionRegexResult != nil {
-		dumpGroups(versionRegexResult)
 		version, _ := strconv.Atoi(versionRegexResult.GroupByName("version").String())
 		result.Revision = version - 1
-		log.Println(version)
 	}
 
 	properRegexResult, _ := ProperRegex.FindStringMatch(normalizedName)
 	if properRegexResult != nil {
-		dumpGroups(properRegexResult)
 		result.Revision += len(properRegexResult.GroupByName("proper").Captures)
 		result.Revision += len(properRegexResult.GroupByName("real").Captures)
 	}

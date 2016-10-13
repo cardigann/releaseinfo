@@ -1,7 +1,6 @@
 package releaseinfo
 
 import (
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -85,7 +84,6 @@ var mediaFileExtensions = map[string]Quality{
 func getQualityForExtension(ext string) Quality {
 	q, ok := mediaFileExtensions[ext]
 	if !ok {
-		log.Printf("No quality associated with extension %q", ext)
 		return QualityUnknown
 	}
 	return q

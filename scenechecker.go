@@ -1,14 +1,11 @@
 ﻿package releaseinfo
 
-import (
-	"log"
-	"strings"
-)
+import "strings"
 
 //This method should prefer false negatives over false positives.
 //It's better not to use a title that might be scene than to use one that isn't scene
 func IsSceneTitle(title string) (bool, error) {
-	log.Printf("Checking if %q is a scene title", title)
+	// log.Printf("Checking if %q is a scene title", title)
 
 	if !strings.Contains(title, ".") {
 		return false, nil

@@ -16,7 +16,7 @@ const (
 	airDateFormat = "2006-01-02"
 )
 
-var ReportTitleRegex = []*regexp2.Regexp{
+var titleRegex = []*regexp2.Regexp{
 	//1. Multi-Part episodes without a title (S01E05.S01E06)
 	regexp2.MustCompile(`^(?:\W*S?(?<season>(?<!\d+)(?:\d{1,2}|\d{4})(?!\d+))(?:(?:[ex]){1,2}(?<episode>\d{1,3}(?!\d+)))+){2,}`,
 		regexp2.IgnoreCase|regexp2.Compiled),
@@ -279,7 +279,6 @@ func ParsePath(path string) (*EpisodeInfo, error) {
 		dir + " " + name, // dirname + name of the file
 		dir + ext,        // dirname + extentions
 	} {
-		log.Printf("Trying to parse title using %s from path %s", test, path)
 		result, err := ParseTitle(test)
 		if err == nil {
 			return result, err
@@ -294,13 +293,10 @@ func ParseTitle(title string) (*EpisodeInfo, error) {
 		return nil, errors.New("Title failed to validate before parsing")
 	}
 
-	log.Printf("Parsing title %q", title)
-
 	if match, _ := ReversedTitleRegex.MatchString(title); match {
 		titleWithoutExtension := removeFileExtension(title)
 
 		title = reverseString(titleWithoutExtension) + strings.TrimPrefix(title, titleWithoutExtension)
-		log.Printf("Reversed name detected. Converted to %q", title)
 	}
 
 	simpleTitle, err := SimpleTitleRegex.Replace(title, "", 0, -1)
@@ -340,19 +336,16 @@ func ParseTitle(title string) (*EpisodeInfo, error) {
 		}
 	}
 
-	for idx, regex := range ReportTitleRegex {
+	for _, regex := range titleRegex {
 		match, err := regex.FindStringMatch(simpleTitle)
 		if match == nil {
 			continue
 		}
 
-		log.Printf("Matched ReportTitleRegex #%d", idx+1)
-
 		result, err := parseMatchCollection(&matchCollection{regex, match})
 		if err != nil {
 			return nil, err
 		} else if result == nil {
-			log.Printf("Skipping to next match")
 			continue
 		}
 
@@ -362,10 +355,10 @@ func ParseTitle(title string) (*EpisodeInfo, error) {
 		}
 
 		result.Language = ParseLanguage(title)
-		log.Printf("Language parsed: %q", result.Language)
+		// log.Printf("Language parsed: %q", result.Language)
 
 		result.Quality = ParseQuality(title)
-		log.Printf("Quality parsed: %s", result.Quality)
+		// log.Printf("Quality parsed: %s", result.Quality)
 
 		result.ReleaseGroup = ParseReleaseGroup(title)
 
@@ -374,12 +367,10 @@ func ParseTitle(title string) (*EpisodeInfo, error) {
 			result.ReleaseGroup = subGroup
 		}
 
-		log.Printf("Release Group parsed: %q", result.ReleaseGroup)
-
 		result.ReleaseHash = getReleaseHash(match)
-		if !isNullOrWhiteSpace(result.ReleaseHash) {
-			log.Printf("Release Hash parsed: %q", result.ReleaseHash)
-		}
+		// if !isNullOrWhiteSpace(result.ReleaseHash) {
+		// 	log.Printf("Release Hash parsed: %q", result.ReleaseHash)
+		// }
 
 		return result, nil
 	}
@@ -390,7 +381,7 @@ func ParseTitle(title string) (*EpisodeInfo, error) {
 // ParseSeriesName parses just the name of the series from the title. If ParseTitle fails internally
 // then the passed in title is cleaned up and returned as-is.
 func ParseSeriesName(title string) string {
-	log.Printf("Parsing series name from %q", title)
+	// log.Printf("Parsing series name from %q", title)
 
 	parseResult, err := ParseTitle(title)
 	if err != nil {
@@ -576,14 +567,10 @@ func parseMatchCollection(col *matchCollection) (*EpisodeInfo, error) {
 			var episodeCaptures = getMatchGroupCaptures(col.Match, "episode")
 			var absoluteEpisodeCaptures = getMatchGroupCaptures(col.Match, "absoluteepisode")
 
-			dumpGroups(col.Match)
-
 			//Allows use to return a list of 0 episodes (We can handle that as a full season release)
 			if len(episodeCaptures) > 0 {
 				first, _ := parseNumber(episodeCaptures[0].String())
 				last, _ := parseNumber(episodeCaptures[len(episodeCaptures)-1].String())
-
-				log.Printf("Found episode %d - %d", first, last)
 
 				if first > last {
 					return nil, nil
@@ -597,8 +584,6 @@ func parseMatchCollection(col *matchCollection) (*EpisodeInfo, error) {
 			if len(absoluteEpisodeCaptures) > 0 {
 				first, _ := parseNumber(absoluteEpisodeCaptures[0].String())
 				last, _ := parseNumber(absoluteEpisodeCaptures[len(absoluteEpisodeCaptures)-1].String())
-
-				log.Printf("Found absolute episode %d - %d", first, last)
 
 				if first > last {
 					return nil, nil
@@ -668,7 +653,7 @@ func validateBeforeParsing(title string) bool {
 
 	for _, regex := range RejectHashedReleasesRegex {
 		if m, _ := regex.FindStringMatch(titleWithoutExtension); m != nil {
-			log.Printf("Rejected Hashed Release Title: " + title)
+			// log.Printf("Rejected Hashed Release Title: " + title)
 			return false
 		}
 	}

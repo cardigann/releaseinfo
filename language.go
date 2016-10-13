@@ -2,7 +2,6 @@
 
 import (
 	"errors"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -21,7 +20,7 @@ var SubtitleLanguageRegex = regexp2.MustCompile(
 func ParseLanguage(title string) language.Tag {
 	lowerTitle := strings.ToLower(title)
 
-	log.Printf("Parsing language from %s", title)
+	// log.Printf("Parsing language from %s", title)
 
 	if strings.Contains(lowerTitle, "english") {
 		return language.English
@@ -141,7 +140,7 @@ func ParseLanguage(title string) language.Tag {
 }
 
 func ParseSubtitleLanguage(fileName string) (language.Tag, error) {
-	log.Printf("Parsing language from subtitle file: %s", fileName)
+	// log.Printf("Parsing language from subtitle file: %s", fileName)
 
 	ext := filepath.Ext(fileName)
 	simpleFilename := strings.TrimSuffix(filepath.Base(fileName), ext)
