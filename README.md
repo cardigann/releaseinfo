@@ -10,7 +10,7 @@ Ported from [Sonarr](https://github.com/Sonarr/Sonarr/commit/f2ccf948356404beceb
 
 ```go
 
-result, err := releaseinfo.ParseTitle("WEEDS.S03E01-06.DUAL.Bluray.AC3.-HELLYWOOD.avi")
+result, err := releaseinfo.Parse("WEEDS.S03E01-06.DUAL.Bluray.AC3.-HELLYWOOD.avi")
 if err != nil {
     log.Fatal(err)
 }
