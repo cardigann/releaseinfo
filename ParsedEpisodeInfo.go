@@ -2,7 +2,6 @@ package releaseinfo
 
 import (
 	"fmt"
-	"strings"
 
 	"golang.org/x/text/language"
 )
@@ -30,7 +29,7 @@ func NewParsedEpisodeInfo() ParsedEpisodeInfo {
 }
 
 func (pei ParsedEpisodeInfo) IsDaily() bool {
-	return strings.TrimSpace(pei.AirDate) != ""
+	return removeSpace(pei.AirDate) != ""
 }
 
 func (pei ParsedEpisodeInfo) IsAbsoluteNumbering() bool {
@@ -39,10 +38,10 @@ func (pei ParsedEpisodeInfo) IsAbsoluteNumbering() bool {
 
 func (pei ParsedEpisodeInfo) IsPossibleSpecialEpisode() bool {
 	// if we don't have eny episode numbers we are likely a special episode and need to do a search by episode title
-	return strings.TrimSpace(pei.AirDate) != "" &&
-		strings.TrimSpace(pei.SeriesTitle) != "" &&
+	return removeSpace(pei.AirDate) != "" &&
+		removeSpace(pei.SeriesTitle) != "" &&
 		(len(pei.EpisodeNumbers) == 0 || pei.SeasonNumber == 0) ||
-		(strings.TrimSpace(pei.SeriesTitle) != "" && pei.Special)
+		(removeSpace(pei.SeriesTitle) != "" && pei.Special)
 }
 
 func (pei ParsedEpisodeInfo) String() string {

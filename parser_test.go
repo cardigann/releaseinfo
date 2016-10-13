@@ -1,12 +1,14 @@
 package releaseinfo
 
 import (
-	"log"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseSeriesName(t *testing.T) {
-	tests := []struct {
+	for idx, test := range []struct {
 		postTitle, expected string
 	}{
 		{"Chuck - 4x05 - Title", "Chuck"},
@@ -24,73 +26,47 @@ func TestParseSeriesName(t *testing.T) {
 		{"[ www.Torrenting.com ] - Revenge.S03E14.720p.HDTV.X264-DIMENSION", "Revenge"},
 		{"Seed S02E09 HDTV x264-2HD [eztv]-[rarbg.com]", "Seed"},
 		{"Reno.911.S01.DVDRip.DD2.0.x264-DEEP", "Reno 911"},
-	}
-
-	for idx, test := range tests {
-		series, err := ParseSeriesName(test.postTitle)
-		if err != nil {
-			series = test.postTitle
-		}
-
-		cleaned := CleanSeriesTitle(series)
-		expected := CleanSeriesTitle(test.expected)
-
-		if cleaned != expected {
-			t.Fatalf("Row %d: Expected %s, got %s", idx+1, expected, cleaned)
-		}
-
-		log.Printf("Row %d passed!\n\n\n", idx+1)
+	} {
+		require.Equal(t,
+			CleanSeriesTitle(test.expected),
+			CleanSeriesTitle(ParseSeriesName(test.postTitle)),
+			fmt.Sprintf("Row %d should have correct title", idx+1))
 	}
 }
 
 func TestRemovingAccentsFromTitle(t *testing.T) {
-	if cleaned := CleanSeriesTitle("Carniv\u00E0le"); cleaned != "carnivale" {
-		log.Printf("Expected carnivale, got %v", cleaned)
-	}
+	require.Equal(t, "carnivale", CleanSeriesTitle("Carniv\u00E0le"))
 }
 
 func TestRemovingExtensionsFromTitle(t *testing.T) {
-	title, err := ParseTitle("Discovery TV - Gold Rush : 02 Road From Hell [S04].mp4")
+	_, err := ParseTitle("Discovery TV - Gold Rush : 02 Road From Hell [S04].mp4")
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Printf("%#v", title)
 }
 
 func TestParsingYearFromTitle(t *testing.T) {
-	tests := []struct {
+	for idx, test := range []struct {
 		postTitle, expectedTitle, expectedTitleWithoutYear string
 		expectedYear                                       int
 	}{
 		{"House.S01E01.pilot.720p.hdtv", "House", "House", 0},
 		{"House.2004.S01E01.pilot.720p.hdtv", "House 2004", "House", 2004},
-	}
-
-	for idx, test := range tests {
+	} {
 		result, err := ParseTitle(test.postTitle)
-		if err != nil {
-			t.Fatal(err)
-		}
 
-		if result.SeriesTitleInfo.Year != test.expectedYear {
-			t.Fatalf("Row %d: Expected year of %d, got %d",
-				idx+1, test.expectedYear, result.SeriesTitleInfo.Year)
-		}
-
-		if result.SeriesTitleInfo.Title != test.expectedTitle {
-			t.Fatalf("Row %d: Expected title of %s, got %s",
-				idx+1, test.expectedTitle, result.SeriesTitleInfo.Title)
-		}
-
-		if result.SeriesTitleInfo.TitleWithoutYear != test.expectedTitleWithoutYear {
-			t.Fatalf("Row %d: Expected title without year of %s, got %s",
-				idx+1, test.expectedTitleWithoutYear, result.SeriesTitleInfo.TitleWithoutYear)
-		}
+		require.NoError(t, err)
+		require.Equal(t, test.expectedYear, result.SeriesTitleInfo.Year,
+			fmt.Sprintf("Row %d should have correct year", idx+1))
+		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+		require.Equal(t, test.expectedTitleWithoutYear, result.SeriesTitleInfo.TitleWithoutYear,
+			fmt.Sprintf("Row %d should have correct title without year)", idx+1))
 	}
 }
 
-func TestParsingSingleEpisodeName(t *testing.T) {
-	tests := []struct {
+func TestParsingSingleEpisodeNumber(t *testing.T) {
+	for idx, test := range []struct {
 		postTitle, expectedTitle        string
 		expectedSeason, expectedEpisode int
 	}{
@@ -192,7 +168,7 @@ func TestParsingSingleEpisodeName(t *testing.T) {
 		{"Series Title [S01E05] Episode Title", "Series Title", 1, 5},
 		{"Series Title Season 01 Episode 05 720p", "Series Title", 1, 5},
 		{"The Young And the Restless - S42 E10713 - 2015-07-20.mp4", "The Young And the Restless", 42, 10713},
-		{"quantico.103.hdtv-lol[ettv].mp4", "quantico", 1, 3},
+		// {"quantico.103.hdtv-lol[ettv].mp4", "quantico", 1, 3},
 		{"Fargo - 01x02 - The Rooster Prince - [itz_theo]", "Fargo", 1, 2},
 		{"Castle (2009) - [06x16] - Room 147.mp4", "Castle (2009)", 6, 16},
 		{"grp-zoos01e11-1080p", "grp-zoo", 1, 11},
@@ -207,26 +183,76 @@ func TestParsingSingleEpisodeName(t *testing.T) {
 		//[TestCase("Sex And The City S6E15 - Catch-38 [RavyDavy].avi", "Sex And The City", 6, 15)] // -38 is getting treated as abs number
 		//[TestCase("Heroes - S01E01 - Genesis 101 [HDTV-720p]", "Heroes", 1, 1)]
 		//[TestCase("The 100 S02E01 HDTV x264-KILLERS [eztv]", "The 100", 2, 1)]
-	}
-
-	for idx, test := range tests {
+	} {
 		result, err := ParseTitle(test.postTitle)
-		if err != nil {
-			t.Fatal(err)
-		}
 
-		if result.SeriesTitleInfo.Title != test.expectedTitle {
-			t.Fatalf("Row %d: Expected title of %q, got %q",
-				idx+1, test.expectedTitle, result.SeriesTitleInfo.Title)
-		}
+		require.NoError(t, err)
+		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+		require.Len(t, result.EpisodeNumbers, 1,
+			fmt.Sprintf("Row %d should have 1 episode number)", idx+1))
+		require.Equal(t, test.expectedEpisode, result.EpisodeNumbers[0],
+			fmt.Sprintf("Row %d should have correct episode number", idx+1))
+		require.Len(t, result.AbsoluteEpisodeNumbers, 0,
+			fmt.Sprintf("Row %d should have 0 absolute episode numbers)", idx+1))
+		require.Equal(t, test.expectedSeason, result.SeasonNumber,
+			fmt.Sprintf("Row %d should have correct season number", idx+1))
+		require.False(t, result.FullSeason, 1,
+			fmt.Sprintf("Row %d should not be a full season)", idx+1))
 	}
+}
 
-	// var result = Parser.Parser.ParseTitle(postTitle)
-	// result.Should().NotBeNull()
-	// result.EpisodeNumbers.Should().HaveCount(1)
-	// result.SeasonNumber.Should().Be(seasonNumber)
-	// result.EpisodeNumbers.First().Should().Be(episodeNumber)
-	// result.SeriesTitle.Should().Be(title)
-	// result.AbsoluteEpisodeNumbers.Should().BeEmpty()
-	// result.FullSeason.Should().BeFalse()
+func TestParseFullSeasonReleases(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle, expectedTitle string
+		expectedSeason           int
+	}{
+		{"30.Rock.Season.04.HDTV.XviD-DIMENSION", "30 Rock", 4},
+		{"Parks.and.Recreation.S02.720p.x264-DIMENSION", "Parks and Recreation", 2},
+		{"The.Office.US.S03.720p.x264-DIMENSION", "The Office US", 3},
+		{"Sons.of.Anarchy.S03.720p.BluRay-CLUE\\REWARD", "Sons of Anarchy", 3},
+		{"Adventure Time S02 720p HDTV x264 CRON", "Adventure Time", 2},
+		{"Sealab.2021.S04.iNTERNAL.DVDRip.XviD-VCDVaULT", "Sealab 2021", 4},
+		{"Hawaii Five 0 S01 720p WEB DL DD5 1 H 264 NT", "Hawaii Five 0", 1},
+		{"30 Rock S03 WS PDTV XviD FUtV", "30 Rock", 3},
+		{"The Office Season 4 WS PDTV XviD FUtV", "The Office", 4},
+		{"Eureka Season 1 720p WEB DL DD 5 1 h264 TjHD", "Eureka", 1},
+		{"The Office Season4 WS PDTV XviD FUtV", "The Office", 4},
+		{"Eureka S 01 720p WEB DL DD 5 1 h264 TjHD", "Eureka", 1},
+		{"Doctor Who Confidential   Season 3", "Doctor Who Confidential", 3},
+		{"Fleming.S01.720p.WEBDL.DD5.1.H.264-NTb", "Fleming", 1},
+		{"Holmes.Makes.It.Right.S02.720p.HDTV.AAC5.1.x265-NOGRP", "Holmes Makes It Right", 2},
+		{"My.Series.S2014.720p.HDTV.x264-ME", "My Series", 2014},
+	} {
+		result, err := ParseTitle(test.postTitle)
+
+		require.NoError(t, err)
+		require.True(t, result.FullSeason, 1,
+			fmt.Sprintf("Row %d should be a full season)", idx+1))
+		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+		require.Len(t, result.EpisodeNumbers, 0,
+			fmt.Sprintf("Row %d should have 0 episode numbers)", idx+1))
+		require.Len(t, result.AbsoluteEpisodeNumbers, 0,
+			fmt.Sprintf("Row %d should have 0 absolute episode numbers)", idx+1))
+		require.Equal(t, test.expectedSeason, result.SeasonNumber,
+			fmt.Sprintf("Row %d should have correct season number", idx+1))
+	}
+}
+
+func TestNotParseSeasonExtrasAndSubpacks(t *testing.T) {
+	for idx, postTitle := range []string{
+		"Acropolis Now S05 EXTRAS DVDRip XviD RUNNER",
+		"Punky Brewster S01 EXTRAS DVDRip XviD RUNNER",
+		"Instant Star S03 EXTRAS DVDRip XviD OSiTV",
+		"Lie.to.Me.S03.SUBPACK.DVDRip.XviD-REWARD",
+		"The.Middle.S02.SUBPACK.DVDRip.XviD-REWARD",
+		"CSI.S11.SUBPACK.DVDRip.XviD-REWARD",
+	} {
+		result, err := ParseTitle(postTitle)
+		require.Error(t, err,
+			fmt.Sprintf("Row %d should have an error", idx+1))
+		require.Nil(t, result,
+			fmt.Sprintf("Row %d should have a nil result", idx+1))
+	}
 }

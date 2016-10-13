@@ -47,11 +47,11 @@ var AnimeBlurayRegex = regexp2.MustCompile(`bd(?:720|1080)|(?<=[-_. (\[])bd(?=[-
 var HighDefPdtvRegex = regexp2.MustCompile(`hr[-_. ]ws`, regexp2.Compiled|regexp2.IgnoreCase)
 
 func ParseQuality(name string) QualityModel {
-	log.Printf("Trying to parse quality for %q", name)
+	log.Printf("Parsing quality for %q", name)
 
-	normalizedName := strings.TrimSpace(name)
+	normalizedName := removeSpace(name)
 	normalizedName = strings.Replace(normalizedName, "_", " ", -1)
-	normalizedName = strings.TrimSpace(normalizedName)
+	normalizedName = removeSpace(normalizedName)
 	normalizedName = strings.ToLower(normalizedName)
 
 	result := parseQualityModifiers(name, normalizedName)

@@ -17,11 +17,6 @@ const (
 )
 
 var ReportTitleRegex = []*regexp2.Regexp{
-	//Anime - Absolute Episode Number + Title + Season+Episode
-	//Todo: This currently breaks series that start with numbers
-	// regexp2.MustCompile(`^(?:(?<absoluteepisode>\d{2,3})(?:_|-|\s|\.)+)+(?<title>.+?)(?:\W|_)+(?:S?(?<season>(?<!\d+)\d{1,2}(?!\d+))(?:(?:\-|[ex]|\W[ex]){1,2}(?<episode>\d{2}(?!\d+)))+)`,
-	// regexp2.IgnoreCase | regexp2.Compiled),
-
 	//1. Multi-Part episodes without a title (S01E05.S01E06)
 	regexp2.MustCompile(`^(?:\W*S?(?<season>(?<!\d+)(?:\d{1,2}|\d{4})(?!\d+))(?:(?:[ex]){1,2}(?<episode>\d{1,3}(?!\d+)))+){2,}`,
 		regexp2.IgnoreCase|regexp2.Compiled),
@@ -214,64 +209,87 @@ var RejectHashedReleasesRegex = []*regexp2.Regexp{
 	regexp2.MustCompile(`^b00bs$`, regexp2.Compiled|regexp2.IgnoreCase),
 }
 
-//Regex to detect whether the title was reversed.
-var ReversedTitleRegex = regexp2.MustCompile(`[-._ ](p027|p0801|\d{2}E\d{2}S)[-._ ]`, regexp2.Compiled)
+var (
+	ReversedTitleRegex = regexp2.MustCompile(`[-._ ](p027|p0801|\d{2}E\d{2}S)[-._ ]`,
+		regexp2.Compiled)
 
-var NormalizeRegex = regexp2.MustCompile(`((?:\b|_)(?<!^)(a(?!$)|an|the|and|or|of)(?:\b|_))|\W|_`, regexp2.IgnoreCase|regexp2.Compiled)
+	NormalizeRegex = regexp2.MustCompile(`((?:\b|_)(?<!^)(a(?!$)|an|the|and|or|of)(?:\b|_))|\W|_`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var FileExtensionRegex = regexp2.MustCompile(`\.[a-z0-9]{2,4}$`, regexp2.IgnoreCase|regexp2.Compiled)
+	FileExtensionRegex = regexp2.MustCompile(`\.[a-z0-9]{2,4}$`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var SimpleTitleRegex = regexp2.MustCompile(`(?:480[ip]|720[ip]|1080[ip]|[xh][\W_]?26[45]|DD\W?5\W1|[<>?*:|]|848x480|1280x720|1920x1080|(8|10)b(it)?)\s*`, regexp2.IgnoreCase|regexp2.Compiled)
+	SimpleTitleRegex = regexp2.MustCompile(`(?:480[ip]|720[ip]|1080[ip]|[xh][\W_]?26[45]|DD\W?5\W1|[<>?*:|]|848x480|1280x720|1920x1080|(8|10)b(it)?)\s*`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var WebsitePrefixRegex = regexp2.MustCompile(`^\[\s*[a-z]+(\.[a-z]+)+\s*\][- ]*`, regexp2.IgnoreCase|regexp2.Compiled)
+	WebsitePrefixRegex = regexp2.MustCompile(`^\[\s*[a-z]+(\.[a-z]+)+\s*\][- ]*`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var AirDateRegex = regexp2.MustCompile(`^(.*?)(?<!\d)((?<airyear>\d{4})[_.-](?<airmonth>[0-1][0-9])[_.-](?<airday>[0-3][0-9])|(?<airmonth>[0-1][0-9])[_.-](?<airday>[0-3][0-9])[_.-](?<airyear>\d{4}))(?!\d)`, regexp2.IgnoreCase|regexp2.Compiled)
+	AirDateRegex = regexp2.MustCompile(`^(.*?)(?<!\d)((?<airyear>\d{4})[_.-](?<airmonth>[0-1][0-9])[_.-](?<airday>[0-3][0-9])|(?<airmonth>[0-1][0-9])[_.-](?<airday>[0-3][0-9])[_.-](?<airyear>\d{4}))(?!\d)`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var SixDigitAirDateRegex = regexp2.MustCompile(`(?<=[_.-])(?<airdate>(?<!\d)(?<airyear>[1-9]\d{1})(?<airmonth>[0-1][0-9])(?<airday>[0-3][0-9]))(?=[_.-])`, regexp2.IgnoreCase|regexp2.Compiled)
+	SixDigitAirDateRegex = regexp2.MustCompile(`(?<=[_.-])(?<airdate>(?<!\d)(?<airyear>[1-9]\d{1})(?<airmonth>[0-1][0-9])(?<airday>[0-3][0-9]))(?=[_.-])`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var CleanReleaseGroupRegex = regexp2.MustCompile(`^(.*?[-._ ](S\d+E\d+)[-._ ])|(-(RP|1|NZBGeek|Obfuscated|sample))+$`, regexp2.IgnoreCase|regexp2.Compiled)
+	CleanReleaseGroupRegex = regexp2.MustCompile(`^(.*?[-._ ](S\d+E\d+)[-._ ])|(-(RP|1|NZBGeek|Obfuscated|sample))+$`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var CleanTorrentSuffixRegex = regexp2.MustCompile(`\[(?:ettv|rartv|rarbg|cttv)\]$`, regexp2.IgnoreCase|regexp2.Compiled)
+	CleanTorrentSuffixRegex = regexp2.MustCompile(`\[(?:ettv|rartv|rarbg|cttv)\]$`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var ReleaseGroupRegex = regexp2.MustCompile(`-(?<releasegroup>[a-z0-9]+)(?<!WEB-DL|480p|720p|1080p|2160p)(?:\b|[-._ ])`, regexp2.IgnoreCase|regexp2.Compiled)
+	ReleaseGroupRegex = regexp2.MustCompile(`-(?<releasegroup>[a-z0-9]+)(?<!WEB-DL|480p|720p|1080p|2160p)(?:\b|[-._ ])`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var AnimeReleaseGroupRegex = regexp2.MustCompile(`^(?:\[(?<subgroup>(?!\s).+?(?<!\s))\](?:_|-|\s|\.)?)`, regexp2.IgnoreCase|regexp2.Compiled)
+	AnimeReleaseGroupRegex = regexp2.MustCompile(`^(?:\[(?<subgroup>(?!\s).+?(?<!\s))\](?:_|-|\s|\.)?)`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var YearInTitleRegex = regexp2.MustCompile(`^(?<title>.+?)(?:\W|_)?(?<year>\d{4})`, regexp2.IgnoreCase|regexp2.Compiled)
+	YearInTitleRegex = regexp2.MustCompile(`^(?<title>.+?)(?:\W|_)?(?<year>\d{4})`,
+		regexp2.IgnoreCase|regexp2.Compiled)
 
-var WordDelimiterRegex = regexp2.MustCompile(`(\s|\.|,|_|-|=|\|)+`, regexp2.Compiled)
-var PunctuationRegex = regexp2.MustCompile(`[^\w\s]`, regexp2.Compiled)
-var CommonWordRegex = regexp2.MustCompile(`\b(a|an|the|and|or|of)\b\s?`, regexp2.IgnoreCase|regexp2.Compiled)
-var SpecialEpisodeWordRegex = regexp2.MustCompile(`\b(part|special|edition|christmas)\b\s?`, regexp2.IgnoreCase|regexp2.Compiled)
-var DuplicateSpacesRegex = regexp2.MustCompile(`\s{2,}`, regexp2.Compiled)
+	WordDelimiterRegex = regexp2.MustCompile(`(\s|\.|,|_|-|=|\|)+`,
+		regexp2.Compiled)
 
-var RequestInfoRegex = regexp2.MustCompile(`\[.+?\]`, regexp2.Compiled)
+	PunctuationRegex = regexp2.MustCompile(`[^\w\s]`,
+		regexp2.Compiled)
+
+	CommonWordRegex = regexp2.MustCompile(`\b(a|an|the|and|or|of)\b\s?`,
+		regexp2.IgnoreCase|regexp2.Compiled)
+
+	SpecialEpisodeWordRegex = regexp2.MustCompile(`\b(part|special|edition|christmas)\b\s?`,
+		regexp2.IgnoreCase|regexp2.Compiled)
+
+	DuplicateSpacesRegex = regexp2.MustCompile(`\s{2,}`,
+		regexp2.Compiled)
+
+	RequestInfoRegex = regexp2.MustCompile(`\[.+?\]`,
+		regexp2.Compiled)
+)
 
 var Numbers = []string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
 
-func ParsePath(path string) (ParsedEpisodeInfo, error) {
+func ParsePath(path string) (*ParsedEpisodeInfo, error) {
 	fileInfo, err := ParseFileInfo(path)
 	if err != nil {
-		return ParsedEpisodeInfo{}, err
+		return nil, err
 	}
 
 	result, err := ParseTitle(fileInfo.Name)
 	if err != nil {
-		log.Printf("Attempting to parse episode info using directory and file names. {0}", fileInfo.Directory.Name)
+		log.Printf("Attempting to parse episode info using directory and file names. %v", fileInfo.Directory.Name)
 		result, err = ParseTitle(fileInfo.Directory.Name + " " + fileInfo.Name)
 	}
 
 	if err != nil {
-		log.Printf("Attempting to parse episode info using directory name. {0}", fileInfo.Directory.Name)
+		log.Printf("Attempting to parse episode info using directory name. %v", fileInfo.Directory.Name)
 		result, err = ParseTitle(fileInfo.Directory.Name + fileInfo.Extension)
 	}
 
 	return result, err
 }
 
-func ParseTitle(title string) (ParsedEpisodeInfo, error) {
+func ParseTitle(title string) (*ParsedEpisodeInfo, error) {
 	if !validateBeforeParsing(title) {
-		return ParsedEpisodeInfo{}, errors.New("Title failed to validate before parsing")
+		return nil, errors.New("Title failed to validate before parsing")
 	}
 
 	log.Printf("Parsing title %q", title)
@@ -291,7 +309,7 @@ func ParseTitle(title string) (ParsedEpisodeInfo, error) {
 
 	simpleTitle, err := SimpleTitleRegex.Replace(title, "", 0, -1)
 	if err != nil {
-		return ParsedEpisodeInfo{}, err
+		return nil, err
 	}
 
 	simpleTitle = removeFileExtension(simpleTitle)
@@ -299,12 +317,12 @@ func ParseTitle(title string) (ParsedEpisodeInfo, error) {
 	// TODO: Quick fix stripping [url] - prefixes.
 	simpleTitle, err = WebsitePrefixRegex.Replace(simpleTitle, "", 0, -1)
 	if err != nil {
-		return ParsedEpisodeInfo{}, err
+		return nil, err
 	}
 
 	simpleTitle, err = CleanTorrentSuffixRegex.Replace(simpleTitle, "", 0, -1)
 	if err != nil {
-		return ParsedEpisodeInfo{}, err
+		return nil, err
 	}
 
 	if airDateMatch, _ := AirDateRegex.FindStringMatch(simpleTitle); airDateMatch != nil {
@@ -319,7 +337,7 @@ func ParseTitle(title string) (ParsedEpisodeInfo, error) {
 		var airMonth = getMatchGroupString(sixDigitAirDateMatch, "airmonth")
 		var airDay = getMatchGroupString(sixDigitAirDateMatch, "airday")
 
-		if airMonth != "" || airDay != "" {
+		if airMonth != "00" || airDay != "00" {
 			var fixedDate = fmt.Sprintf("20%s.%s.%s", airYear, airMonth, airDay)
 			simpleTitle = strings.Replace(simpleTitle,
 				getMatchGroupString(sixDigitAirDateMatch, "airdate"), fixedDate, -1)
@@ -332,13 +350,13 @@ func ParseTitle(title string) (ParsedEpisodeInfo, error) {
 			continue
 		}
 
-		log.Printf("Matched %s to ReportTitleRegex (#%d)", simpleTitle, idx+1)
-		for _, group := range match.Groups() {
-			log.Printf("Group %s [%d]: %s", group.Name, group.Length, group.Capture.String())
-		}
+		log.Printf("Matched ReportTitleRegex #%d", idx+1)
 
 		result, err := parseMatchCollection(&matchCollection{regex, match})
 		if err != nil {
+			return nil, err
+		} else if result == nil {
+			log.Printf("Skipping to next match")
 			continue
 		}
 
@@ -370,18 +388,20 @@ func ParseTitle(title string) (ParsedEpisodeInfo, error) {
 		return result, nil
 	}
 
-	return ParsedEpisodeInfo{}, fmt.Errorf("Unable to parse %q", title)
+	return nil, fmt.Errorf("Unable to parse %q", title)
 }
 
-func ParseSeriesName(title string) (string, error) {
+// ParseSeriesName parses just the name of the series from the title. If ParseTitle fails internally
+// then the passed in title is cleaned up and returned as-is.
+func ParseSeriesName(title string) string {
 	log.Printf("Parsing series name from %q", title)
 
 	parseResult, err := ParseTitle(title)
 	if err != nil {
-		return "", err
+		return CleanSeriesTitle(title)
 	}
 
-	return parseResult.SeriesTitle, nil
+	return parseResult.SeriesTitle
 }
 
 func CleanSeriesTitle(title string) string {
@@ -391,7 +411,7 @@ func CleanSeriesTitle(title string) string {
 	}
 
 	title = optionalReplace(NormalizeRegex, title, "")
-	return removeAccent(strings.ToLower(title))
+	return removeSpace(removeAccent(strings.ToLower(title)))
 }
 
 func NormalizeEpisodeTitle(title string) string {
@@ -399,7 +419,7 @@ func NormalizeEpisodeTitle(title string) string {
 	title = optionalReplace(PunctuationRegex, title, "")
 	title = optionalReplace(DuplicateSpacesRegex, title, "")
 
-	return strings.ToLower(strings.TrimSpace(title))
+	return strings.ToLower(removeSpace(title))
 }
 
 func NormalizeTitle(title string) string {
@@ -408,11 +428,11 @@ func NormalizeTitle(title string) string {
 	title = optionalReplace(CommonWordRegex, title, "")
 	title = optionalReplace(DuplicateSpacesRegex, title, "")
 
-	return strings.ToLower(strings.TrimSpace(title))
+	return strings.ToLower(removeSpace(title))
 }
 
 func ParseReleaseGroup(title string) string {
-	title = strings.TrimSpace(title)
+	title = removeSpace(title)
 	title = removeFileExtension(title)
 	title = optionalReplace(DuplicateSpacesRegex, title, " ")
 	title = optionalReplace(WebsitePrefixRegex, title, " ")
@@ -425,19 +445,18 @@ func ParseReleaseGroup(title string) string {
 	title = optionalReplace(CleanReleaseGroupRegex, title, "")
 
 	match, err := ReleaseGroupRegex.FindStringMatch(title)
-	log.Println(match, err)
+	if match != nil {
+		var releaseGroupCaptures = getMatchGroupCaptures(match, "releasegroup")
 
-	if err != nil {
-		panic(err)
-		// // var group = matches.OfType<Match>().Last().Groups["releasegroup"].Value
+		if len(releaseGroupCaptures) > 0 {
+			lastGroup := releaseGroupCaptures[len(releaseGroupCaptures)-1].String()
 
-		// var groupIsNumeric int
+			if _, err := strconv.Atoi(lastGroup); err == nil {
+				return ""
+			}
 
-		// if int.TryParse(group, groupIsNumeric) {
-		// 	return nil
-		// }
-
-		// return group
+			return lastGroup
+		}
 	}
 
 	return ""
@@ -476,10 +495,17 @@ func getSeriesTitleInfo(title string) SeriesTitleInfo {
 }
 
 func getMatchGroupString(m *regexp2.Match, group string) string {
-	if result := m.GroupByName("title"); result != nil {
+	if result := m.GroupByName(group); result != nil {
 		return result.String()
 	}
 	return ""
+}
+
+func getMatchGroupCaptures(m *regexp2.Match, group string) []regexp2.Capture {
+	if result := m.GroupByName(group); result != nil {
+		return result.Captures
+	}
+	return nil
 }
 
 func hasGroup(m *regexp2.Match, group string) bool {
@@ -489,23 +515,34 @@ func hasGroup(m *regexp2.Match, group string) bool {
 	return false
 }
 
+func dumpGroups(m *regexp2.Match) {
+	for _, group := range m.Groups() {
+		log.Printf("Group %s [%d]: %s", group.Name, group.Length, group.Capture.String())
+	}
+}
+
 type matchCollection struct {
 	Regexp *regexp2.Regexp
 	Match  *regexp2.Match
 }
 
-func (mc *matchCollection) NextMatch() (*regexp2.Match, error) {
-	return mc.Regexp.FindNextMatch(mc.Match)
+func (mc *matchCollection) Next() error {
+	m, err := mc.Regexp.FindNextMatch(mc.Match)
+	if err != nil {
+		return err
+	}
+	mc.Match = m
+	return nil
 }
 
-func parseMatchCollection(col *matchCollection) (ParsedEpisodeInfo, error) {
+func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 	seriesName := getMatchGroupString(col.Match, "title")
 	seriesName = strings.Replace(seriesName, "_", " ", -1)
 	seriesName = strings.Replace(seriesName, ".", " ", -1)
 	seriesName = optionalReplace(RequestInfoRegex, seriesName, "")
-	seriesName = strings.TrimSpace(seriesName)
+	seriesName = removeSpace(seriesName)
 
-	var result ParsedEpisodeInfo
+	var result *ParsedEpisodeInfo
 	var airYear int
 
 	if match := col.Match.GroupByName("airyear"); match != nil {
@@ -516,12 +553,10 @@ func parseMatchCollection(col *matchCollection) (ParsedEpisodeInfo, error) {
 		var distinctSeasons = map[int]struct{}{}
 		var seasons = []int{}
 
-		if hasGroup(col.Match, "season") {
-			for _, seasonCapture := range col.Match.GroupByName("season").Captures {
-				if parsedSeason, err := strconv.Atoi(seasonCapture.String()); err == nil {
-					distinctSeasons[parsedSeason] = struct{}{}
-					seasons = append(seasons, parsedSeason)
-				}
+		for _, seasonCapture := range getMatchGroupCaptures(col.Match, "season") {
+			if parsedSeason, err := strconv.Atoi(seasonCapture.String()); err == nil {
+				distinctSeasons[parsedSeason] = struct{}{}
+				seasons = append(seasons, parsedSeason)
 			}
 		}
 
@@ -533,68 +568,69 @@ func parseMatchCollection(col *matchCollection) (ParsedEpisodeInfo, error) {
 
 		//If more than 1 season was parsed go to the next REGEX (A multi-season release is unlikely)
 		if len(distinctSeasons) > 1 {
-			return ParsedEpisodeInfo{}, errors.New("More than 1 season was parsed, multi-season?")
+			return nil, nil
 		}
 
-		result = ParsedEpisodeInfo{
+		result = &ParsedEpisodeInfo{
 			SeasonNumber:           seasons[0],
 			EpisodeNumbers:         []int{},
 			AbsoluteEpisodeNumbers: []int{},
 		}
 
-		for {
-			matchGroup, _ := col.NextMatch()
-			if matchGroup == nil {
-				break
+		for col.Match != nil {
+			var episodeCaptures = getMatchGroupCaptures(col.Match, "episode")
+			var absoluteEpisodeCaptures = getMatchGroupCaptures(col.Match, "absoluteepisode")
+
+			dumpGroups(col.Match)
+
+			//Allows use to return a list of 0 episodes (We can handle that as a full season release)
+			if len(episodeCaptures) > 0 {
+				first, _ := parseNumber(episodeCaptures[0].String())
+				last, _ := parseNumber(episodeCaptures[len(episodeCaptures)-1].String())
+
+				if first > last {
+					return nil, nil
+				}
+
+				for i := first; i <= last; i++ {
+					result.EpisodeNumbers = append(result.EpisodeNumbers, i)
+				}
 			}
 
-			log.Printf("match group: %#v", matchGroup)
+			if len(absoluteEpisodeCaptures) > 0 {
+				first, _ := strconv.Atoi(absoluteEpisodeCaptures[0].String())
+				last, _ := strconv.Atoi(absoluteEpisodeCaptures[len(absoluteEpisodeCaptures)-1].String())
 
-			// 	// var episodeCaptures = matchGroup.Groups["episode"].Captures.Cast<Capture>().ToList()
-			// 	// var absoluteEpisodeCaptures = matchGroup.Groups["absoluteepisode"].Captures.Cast<Capture>().ToList()
+				if first > last {
+					return nil, nil
+				}
 
-			// 	//Allows use to return a list of 0 episodes (We can handle that as a full season release)
-			// 	if hasGroup(matchGroup, "episode") {
-			// 		var first = ParseNumber(episodeCaptures.First().Value)
-			// 		var last = ParseNumber(episodeCaptures.Last().Value)
+				for i := first; i <= last; i++ {
+					result.AbsoluteEpisodeNumbers = append(result.AbsoluteEpisodeNumbers, i)
+				}
 
-			// 		if first > last {
-			// 			return nil
-			// 		}
+				if hasGroup(col.Match, "special") {
+					result.Special = true
+				}
+			}
 
-			// 		var count = last - first + 1
-			// 		result.EpisodeNumbers = Enumerable.Range(first, count).ToArray()
-			// 	}
+			if len(episodeCaptures) == 0 && len(absoluteEpisodeCaptures) == 0 {
+				//Check to see if this is an "Extras" or "SUBPACK" release, if it is, return NULL
+				//Todo: Set a "Extras" flag in EpisodeParseResult if we want to download them ever
+				if !isNullOrWhiteSpace(getMatchGroupString(col.Match, "extras")) {
+					return nil, nil
+				}
 
-			// 	if absoluteEpisodeCaptures.Any() {
-			// 		var first = Convert.ToInt32(absoluteEpisodeCaptures.First().Value)
-			// 		var last = Convert.ToInt32(absoluteEpisodeCaptures.Last().Value)
+				result.FullSeason = true
+			}
 
-			// 		if first > last {
-			// 			return nil
-			// 		}
+			if len(result.AbsoluteEpisodeNumbers) > 0 && len(result.EpisodeNumbers) == 0 {
+				result.SeasonNumber = 0
+			}
 
-			// 		var count = last - first + 1
-			// 		result.AbsoluteEpisodeNumbers = Enumerable.Range(first, count).ToArray()
-
-			// 		if matchGroup.Groups["special"].Success {
-			// 			result.Special = true
-			// 		}
-			// }
-
-			// if !episodeCaptures.Any() && !absoluteEpisodeCaptures.Any() {
-			// 	//Check to see if this is an "Extras" or "SUBPACK" release, if it is, return NULL
-			// 	//Todo: Set a "Extras" flag in EpisodeParseResult if we want to download them ever
-			// 	if !matchCollection[0].Groups["extras"].Value.IsNullOrWhiteSpace() {
-			// 		return nil
-			// 	}
-
-			// 	result.FullSeason = true
-			// }
-			// }
-
-			// if result.AbsoluteEpisodeNumbers.Any() && !result.EpisodeNumbers.Any() {
-			// 	result.SeasonNumber = 0
+			if err := col.Next(); err != nil {
+				return nil, nil
+			}
 		}
 	} else {
 		//Try to Parse as a daily show
@@ -610,12 +646,12 @@ func parseMatchCollection(col *matchCollection) (ParsedEpisodeInfo, error) {
 
 		airDate, err := time.Parse("2006-1-2", fmt.Sprintf("%d-%d-%d", airYear, airMonth, airDay))
 		if err != nil {
-			return ParsedEpisodeInfo{}, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
+			return nil, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
 		}
 
 		//Check if episode is in the future (most likely a parse error)
 		if airDate.After(time.Now()) {
-			return ParsedEpisodeInfo{}, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
+			return nil, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
 		}
 
 		result.AirDate = airDate.Format(airDateFormat)
@@ -623,8 +659,6 @@ func parseMatchCollection(col *matchCollection) (ParsedEpisodeInfo, error) {
 
 	result.SeriesTitle = seriesName
 	result.SeriesTitleInfo = getSeriesTitleInfo(result.SeriesTitle)
-
-	log.Printf("Episode Parsed: %#v", result)
 
 	return result, nil
 }
@@ -662,4 +696,18 @@ func getReleaseHash(m *regexp2.Match) string {
 	}
 
 	return ""
+}
+
+func parseNumber(value string) (int, error) {
+	if val, err := strconv.Atoi(value); err == nil {
+		return val, nil
+	}
+
+	for idx, num := range Numbers {
+		if strings.ToLower(value) == num {
+			return idx, nil
+		}
+	}
+
+	return 0, fmt.Errorf("%v isn't a number", value)
 }

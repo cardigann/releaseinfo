@@ -11,11 +11,20 @@ import (
 )
 
 func isNullOrWhiteSpace(s string) bool {
-	return strings.TrimSpace(s) == ""
+	return removeSpace(s) == ""
 }
 
 func isNonSpacingMark(r rune) bool {
 	return unicode.Is(unicode.Mn, r) // Mn: nonspacing marks
+}
+
+func removeSpace(s string) string {
+	return strings.TrimSpace(strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) || r == '\x00' {
+			return ' '
+		}
+		return r
+	}, s))
 }
 
 func removeAccent(s string) string {
