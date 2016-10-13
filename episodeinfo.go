@@ -2,11 +2,12 @@ package releaseinfo
 
 import (
 	"fmt"
+	"strings"
 
 	"golang.org/x/text/language"
 )
 
-type ParsedEpisodeInfo struct {
+type EpisodeInfo struct {
 	SeriesTitle            string
 	SeriesTitleInfo        SeriesTitleInfo
 	Quality                QualityModel
@@ -27,43 +28,41 @@ type SeriesTitleInfo struct {
 	Year             int
 }
 
-func NewParsedEpisodeInfo() ParsedEpisodeInfo {
-	return ParsedEpisodeInfo{
-		EpisodeNumbers:         []int{},
-		AbsoluteEpisodeNumbers: []int{},
-	}
+func (i EpisodeInfo) IsDaily() bool {
+	return removeSpace(i.AirDate) != ""
 }
 
-func (pei ParsedEpisodeInfo) IsDaily() bool {
-	return removeSpace(pei.AirDate) != ""
+func (i EpisodeInfo) IsAbsoluteNumbering() bool {
+	return len(i.AbsoluteEpisodeNumbers) > 0
 }
 
-func (pei ParsedEpisodeInfo) IsAbsoluteNumbering() bool {
-	return len(pei.AbsoluteEpisodeNumbers) > 0
+func (i EpisodeInfo) IsPossibleSpecialEpisode() bool {
+	return removeSpace(i.AirDate) != "" &&
+		removeSpace(i.SeriesTitle) != "" &&
+		(len(i.EpisodeNumbers) == 0 || i.SeasonNumber == 0) ||
+		(removeSpace(i.SeriesTitle) != "" && i.Special)
 }
 
-func (pei ParsedEpisodeInfo) IsPossibleSpecialEpisode() bool {
-	// if we don't have eny episode numbers we are likely a special episode and need to do a search by episode title
-	return removeSpace(pei.AirDate) != "" &&
-		removeSpace(pei.SeriesTitle) != "" &&
-		(len(pei.EpisodeNumbers) == 0 || pei.SeasonNumber == 0) ||
-		(removeSpace(pei.SeriesTitle) != "" && pei.Special)
-}
-
-func (pei ParsedEpisodeInfo) String() string {
+func (i EpisodeInfo) String() string {
 	episodeString := "[Unknown Episode]"
 
-	if pei.IsDaily() && len(pei.EpisodeNumbers) == 0 {
-		episodeString = fmt.Sprintf("%s", pei.AirDate)
-	} else if pei.FullSeason {
-		episodeString = fmt.Sprintf("Season {0:00}", pei.SeasonNumber)
-	} else if pei.EpisodeNumbers != nil && len(pei.EpisodeNumbers) > 0 {
-		panic("fix me")
-		// episodeString = string.Format("S{0:00}E{1}", SeasonNumber, string.Join("-", EpisodeNumbers.Select(c => c.ToString("00"))));
-	} else if pei.AbsoluteEpisodeNumbers != nil && len(pei.AbsoluteEpisodeNumbers) > 0 {
-		panic("fix me")
-		//episodeString = string.Format("{0}", string.Join("-", AbsoluteEpisodeNumbers.Select(c => c.ToString("000"))));
+	if i.IsDaily() && len(i.EpisodeNumbers) == 0 {
+		episodeString = fmt.Sprintf("%s", i.AirDate)
+	} else if i.FullSeason {
+		episodeString = fmt.Sprintf("S%02d", i.SeasonNumber)
+	} else if len(i.EpisodeNumbers) > 0 {
+		episodes := []string{}
+		for _, episode := range i.EpisodeNumbers {
+			episodes = append(episodes, fmt.Sprintf("%02d", episode))
+		}
+		episodeString = fmt.Sprintf("S%02dE%s", i.SeasonNumber, strings.Join(episodes, "-"))
+	} else if len(i.AbsoluteEpisodeNumbers) > 0 {
+		episodes := []string{}
+		for _, episode := range i.AbsoluteEpisodeNumbers {
+			episodes = append(episodes, fmt.Sprintf("%03d", episode))
+		}
+		episodeString = strings.Join(episodes, "-")
 	}
 
-	return fmt.Sprintf("{0} - {1} {2}", pei.SeriesTitle, episodeString, pei.Quality)
+	return fmt.Sprintf("%s - %s (%s)", i.SeriesTitle, episodeString, i.Quality)
 }

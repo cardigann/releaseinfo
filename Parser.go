@@ -268,7 +268,7 @@ var (
 var Numbers = []string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
 
 // ParsePath extracts episode info from a full path
-func ParsePath(path string) (*ParsedEpisodeInfo, error) {
+func ParsePath(path string) (*EpisodeInfo, error) {
 	path = normalizePath(path)
 	name := filepath.Base(path)
 	dir := filepath.Base(filepath.Dir(path))
@@ -289,7 +289,7 @@ func ParsePath(path string) (*ParsedEpisodeInfo, error) {
 	return nil, fmt.Errorf("Unable to parse path %s", path)
 }
 
-func ParseTitle(title string) (*ParsedEpisodeInfo, error) {
+func ParseTitle(title string) (*EpisodeInfo, error) {
 	if !validateBeforeParsing(title) {
 		return nil, errors.New("Title failed to validate before parsing")
 	}
@@ -530,14 +530,14 @@ func newAirDate(year, month, day int) time.Time {
 	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
 }
 
-func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
+func parseMatchCollection(col *matchCollection) (*EpisodeInfo, error) {
 	seriesName := getMatchGroupString(col.Match, "title")
 	seriesName = strings.Replace(seriesName, "_", " ", -1)
 	seriesName = strings.Replace(seriesName, ".", " ", -1)
 	seriesName = optionalReplace(RequestInfoRegex, seriesName, "")
 	seriesName = removeSpace(seriesName)
 
-	var result *ParsedEpisodeInfo
+	var result *EpisodeInfo
 	var airYear int
 
 	if match := col.Match.GroupByName("airyear"); match != nil {
@@ -566,7 +566,7 @@ func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 			return nil, nil
 		}
 
-		result = &ParsedEpisodeInfo{
+		result = &EpisodeInfo{
 			SeasonNumber:           seasons[0],
 			EpisodeNumbers:         []int{},
 			AbsoluteEpisodeNumbers: []int{},
@@ -650,7 +650,7 @@ func parseMatchCollection(col *matchCollection) (*ParsedEpisodeInfo, error) {
 			return nil, fmt.Errorf("Invalid date %d-%d-%d", airYear, airMonth, airDay)
 		}
 
-		result = &ParsedEpisodeInfo{
+		result = &EpisodeInfo{
 			EpisodeNumbers:         []int{},
 			AbsoluteEpisodeNumbers: []int{},
 			AirDate:                airDate.Format(airDateFormat),
