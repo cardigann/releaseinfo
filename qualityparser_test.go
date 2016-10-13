@@ -210,73 +210,53 @@ func TestParsingOurOwnQualityNames(t *testing.T) {
 	}
 }
 
-// var selfQualityParserCases =
+func TestQualitySourceIsSetWhenParsing(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle string
+		source    string
+	}{
+		{"Saturday.Night.Live.Vintage.S10E09.Eddie.Murphy.The.Honeydrippers.1080i.UPSCALE.HDTV.DD5.1.MPEG2-zebra", "name"},
+		{"Dexter - S01E01 - Title [HDTV-1080p]", "name"},
+		{"[CR] Sailor Moon - 004 [480p][48CE2D0F]", "name"},
+		{"White.Van.Man.2011.S02E01.WS.PDTV.x264-REPACK-TLA", "name"},
+		{"Revolution.S01E02.Chained.Heat.mkv", "extension"},
+		{"Dexter - S01E01 - Title.avi", "extension"},
+		{"the_x-files.9x18.sunshine_days.avi", "extension"},
+		{"[CR] Sailor Moon - 004 [48CE2D0F].avi", "extension"},
+	} {
+		result := ParseQuality(test.postTitle)
 
-// ver otherSourceQualityParserCases = []struct{
-// 	name string
-// 	quality Quality
-// }{
-// { "SD TV", QualitySDTV },
-// { "SD DVD",  Qualit.DVD },
-// { "480p WEB-DL", QualityWEBDL480p },
-// { "HD TV", QualityHDTV720p },
-// { "1080p HD TV", QualityHDTV1080p },
-// { "2160p HD TV", QualityHDTV2160p },
-// { "720p WEB-DL", QualityWEBDL720p },
-// { "1080p WEB-DL", QualityWEBDL1080p },
-// { "2160p WEB-DL", QualityWEBDL2160p },
-// { "720p BluRay", QualityBluray720p },
-// { "1080p BluRay", QualityBluray1080p },
-// { "2160p BluRay", QualityBluray2160p },
-// }
+		require.Equal(t, test.source, result.QualitySource,
+			fmt.Sprintf("Row %d should have the correct quality source", idx+1))
+	}
+}
 
-// public void quality_parse(string title, bool proper)
-// {
-//     ParseAndVerifyQuality(title, Quality.Unknown, proper);
-// }
+func TestParsingRevision(t *testing.T) {
+	for idx, test := range []struct {
+		postTitle string
+		revision  int
+	}{
+		{"Chuck.S04E05.HDTV.XviD-LOL", 0},
+		{"Gold.Rush.S04E05.Garnets.or.Gold.REAL.REAL.PROPER.HDTV.x264-W4F", 3},
+		{"Chuck.S03E17.REAL.PROPER.720p.HDTV.x264-ORENJI-RP", 2},
+		{"Covert.Affairs.S05E09.REAL.PROPER.HDTV.x264-KILLERS", 2},
+		{"Mythbusters.S14E01.REAL.PROPER.720p.HDTV.x264-KILLERS", 2},
+		{"Orange.Is.the.New.Black.s02e06.real.proper.720p.webrip.x264-2hd", 2},
+		{"Top.Gear.S21E07.Super.Duper.Real.Proper.HDTV.x264-FTP", 2},
+		{"Top.Gear.S21E07.PROPER.HDTV.x264-RiVER-RP", 1},
+		{"House.S07E11.PROPER.REAL.RERIP.1080p.BluRay.x264-TENEIGHTY", 2},
+		{"[MGS] - Kuragehime - Episode 02v2 - [D8B6C90D]", 1},
+		{"[Hatsuyuki] Tokyo Ghoul - 07 [v2][848x480][23D8F455].avi", 1},
+		{"[DeadFish] Barakamon - 01v3 [720p][AAC]", 2},
+		{"[DeadFish] Momo Kyun Sword - 01v4 [720p][AAC]", 3},
+		{"The Real Housewives of Some Place - S01E01 - Why are we doing this?", 0},
+		{"[Vivid-Asenshi] Akame ga Kill - 04v2 [266EE983]", 1},
+		{"[Vivid-Asenshi] Akame ga Kill - 03v2 [66A05817]", 1},
+		{"[Vivid-Asenshi] Akame ga Kill - 02v2 [1F67AB55]", 1},
+	} {
+		result := ParseQuality(test.postTitle)
 
-// [Test, TestCaseSource("SelfQualityParserCases")]
-// public void parsing_our_own_quality_enum_name(Quality quality)
-// {
-//     var fileName = string.Format("My series S01E01 [{0}]", quality.Name);
-//     var result = QualityParser.ParseQuality(fileName);
-//     result.Quality.Should().Be(quality);
-// }
-
-// [Test, TestCaseSource("OtherSourceQualityParserCases")]
-// public void should_parse_quality_from_other_source(string qualityString, Quality quality)
-// {
-//     foreach (var c in new char[] { '-', '.', ' ', '_' })
-//     {
-//         var title = string.Format("My series S01E01 {0}", qualityString.Replace(' ', c));
-
-//         ParseAndVerifyQuality(title, quality, false);
-//     }
-// }
-
-// [TestCase("Saturday.Night.Live.Vintage.S10E09.Eddie.Murphy.The.Honeydrippers.1080i.UPSCALE.HDTV.DD5.1.MPEG2-zebra")]
-// [TestCase("Dexter - S01E01 - Title [HDTV-1080p]")]
-// [TestCase("[CR] Sailor Moon - 004 [480p][48CE2D0F]")]
-// [TestCase("White.Van.Man.2011.S02E01.WS.PDTV.x264-REPACK-TLA")]
-// public void should_parse_quality_from_name(string title)
-// {
-//     QualityParser.ParseQuality(title).QualitySource.Should().Be(QualitySource.Name);
-// }
-
-// [TestCase("Revolution.S01E02.Chained.Heat.mkv")]
-// [TestCase("Dexter - S01E01 - Title.avi")]
-// [TestCase("the_x-files.9x18.sunshine_days.avi")]
-// [TestCase("[CR] Sailor Moon - 004 [48CE2D0F].avi")]
-// public void should_parse_quality_from_extension(string title)
-// {
-//     QualityParser.ParseQuality(title).QualitySource.Should().Be(QualitySource.Extension);
-// }
-
-// private void ParseAndVerifyQuality(string title, Quality quality, bool proper)
-// {
-//     var result = QualityParser.ParseQuality(title);
-//     result.Quality.Should().Be(quality);
-
-//     var version = proper ? 2 : 1;
-//     result.Revision.Version.Should().Be(version);
-// }
+		require.Equal(t, test.revision, result.Revision,
+			fmt.Sprintf("Row %d should have the correct revision", idx+1))
+	}
+}

@@ -18,17 +18,13 @@ var (
 		`\b(?<rawhd>RawHD|1080i[-_. ]HDTV|Raw[-_. ]HD|MPEG[-_. ]?2)\b`,
 		regexp2.Compiled|regexp2.IgnoreCase)
 
-	ProperRegex = regexp2.MustCompile(
-		`\b(?<proper>proper|repack|rerip)\b`,
-		regexp2.Compiled|regexp2.IgnoreCase)
-
 	VersionRegex = regexp2.MustCompile(
 		`\dv(?<version>\d)\b|\[v(?<version>\d)\]`,
 		regexp2.Compiled|regexp2.IgnoreCase)
 
-	RealRegex = regexp2.MustCompile(
-		`\b(?<real>REAL)\b`,
-		regexp2.Compiled)
+	ProperRegex = regexp2.MustCompile(
+		`\b(?<real>real[-_. ])*(?<proper>proper|repack|rerip)(?<real>[-_. ]real)*\b`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
 	ResolutionRegex = regexp2.MustCompile(
 		`\b(?:(?<_480p>480p|640x480|848x480)|(?<_576p>576p)|(?<_720p>720p|1280x720)|(?<_1080p>1080p|1920x1080)|(?<_2160p>2160p))\b`,
@@ -327,17 +323,21 @@ func otherSourceMatch(name string) Quality {
 }
 
 func parseQualityModifiers(name string, normalizedName string) QualityModel {
-	result := QualityModel{Quality: QualityUnknown}
-
-	if m, _ := ProperRegex.FindStringMatch(normalizedName); m != nil {
-		result.Revision = RevisionProper
-	}
+	result := QualityModel{Quality: QualityUnknown, QualitySource: "name"}
 
 	versionRegexResult, _ := VersionRegex.FindStringMatch(normalizedName)
-	dumpGroups(versionRegexResult)
-
 	if versionRegexResult != nil {
-		result.Revision, _ = strconv.Atoi(versionRegexResult.GroupByName("version").String())
+		dumpGroups(versionRegexResult)
+		version, _ := strconv.Atoi(versionRegexResult.GroupByName("version").String())
+		result.Revision = version - 1
+		log.Println(version)
+	}
+
+	properRegexResult, _ := ProperRegex.FindStringMatch(normalizedName)
+	if properRegexResult != nil {
+		dumpGroups(properRegexResult)
+		result.Revision += len(properRegexResult.GroupByName("proper").Captures)
+		result.Revision += len(properRegexResult.GroupByName("real").Captures)
 	}
 
 	return result

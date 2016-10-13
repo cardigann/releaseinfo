@@ -501,7 +501,14 @@ func dumpGroups(m *regexp2.Match) {
 		return
 	}
 	for _, group := range m.Groups() {
-		log.Printf("Group %s [%d]: %s", group.Name, group.Length, group.Capture.String())
+		captures := []string{}
+
+		for _, capture := range group.Captures {
+			captures = append(captures, capture.String())
+		}
+
+		log.Printf("Group %s [%d]: %s",
+			group.Name, len(group.Captures), strings.Join(captures, ", "))
 	}
 }
 
