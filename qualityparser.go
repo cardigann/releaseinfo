@@ -9,43 +9,74 @@ import (
 	"github.com/dlclark/regexp2"
 )
 
-var SourceRegex = regexp2.MustCompile(`\b(?:
-	(?<bluray>BluRay|Blu-Ray|HDDVD|BD)|
-	(?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD|[. ]WEB[. ](?:[xh]26[45]|DD5[. ]1)|\d+0p[. ]WEB[. ])|
-	(?<hdtv>HDTV)|
-	(?<bdrip>BDRip)|
-	(?<brrip>BRRip)|
-	(?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|
-	(?<dsr>WS[-_. ]DSR|DSR)|
-	(?<pdtv>PDTV)|
-	(?<sdtv>SDTV)|
-	(?<tvrip>TVRip)
-	)\b`,
-	regexp2.Compiled|regexp2.IgnoreCase|regexp2.IgnorePatternWhitespace)
+var (
+	SourceRegex = regexp2.MustCompile(
+		`\b(?:(?<bluray>BluRay|Blu-Ray|HDDVD|BD)|(?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD|[. ]WEB[. ](?:[xh]26[45]|DD5[. ]1)|\d+0p[. ]WEB[. ])|(?<hdtv>HDTV)|(?<bdrip>BDRip)|(?<brrip>BRRip)|(?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|(?<dsr>WS[-_. ]DSR|DSR)|(?<pdtv>PDTV)|(?<sdtv>SDTV)|(?<tvrip>TVRip))\b`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var RawHDRegex = regexp2.MustCompile(`\b(?<rawhd>RawHD|1080i[-_. ]HDTV|Raw[-_. ]HD|MPEG[-_. ]?2)\b`,
-	regexp2.Compiled|regexp2.IgnoreCase)
+	RawHDRegex = regexp2.MustCompile(
+		`\b(?<rawhd>RawHD|1080i[-_. ]HDTV|Raw[-_. ]HD|MPEG[-_. ]?2)\b`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var ProperRegex = regexp2.MustCompile(`\b(?<proper>proper|repack|rerip)\b`,
-	regexp2.Compiled|regexp2.IgnoreCase)
+	ProperRegex = regexp2.MustCompile(
+		`\b(?<proper>proper|repack|rerip)\b`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var VersionRegex = regexp2.MustCompile(`\dv(?<version>\d)\b|\[v(?<version>\d)\]`,
-	regexp2.Compiled|regexp2.IgnoreCase)
+	VersionRegex = regexp2.MustCompile(
+		`\dv(?<version>\d)\b|\[v(?<version>\d)\]`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var RealRegex = regexp2.MustCompile(`\b(?<real>REAL)\b`,
-	regexp2.Compiled)
+	RealRegex = regexp2.MustCompile(
+		`\b(?<real>REAL)\b`,
+		regexp2.Compiled)
 
-var ResolutionRegex = regexp2.MustCompile(`\b(?:(?<_480p>480p|640x480|848x480)|(?<_576p>576p)|(?<_720p>720p|1280x720)|(?<_1080p>1080p|1920x1080)|(?<_2160p>2160p))\b`,
-	regexp2.Compiled|regexp2.IgnoreCase)
+	ResolutionRegex = regexp2.MustCompile(
+		`\b(?:(?<_480p>480p|640x480|848x480)|(?<_576p>576p)|(?<_720p>720p|1280x720)|(?<_1080p>1080p|1920x1080)|(?<_2160p>2160p))\b`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var CodecRegex = regexp2.MustCompile(`\b(?:(?<x264>x264)|(?<h264>h264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))\b`,
-	regexp2.Compiled|regexp2.IgnoreCase)
+	CodecRegex = regexp2.MustCompile(
+		`\b(?:(?<x264>x264)|(?<h264>h264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))\b`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var OtherSourceRegex = regexp2.MustCompile(`(?<hdtv>HD[-_. ]TV)|(?<sdtv>SD[-_. ]TV)`, regexp2.Compiled|regexp2.IgnoreCase)
+	OtherSourceRegex = regexp2.MustCompile(
+		`(?<hdtv>HD[-_. ]TV)|(?<sdtv>SD[-_. ]TV)`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var AnimeBlurayRegex = regexp2.MustCompile(`bd(?:720|1080)|(?<=[-_. (\[])bd(?=[-_. )\]])`, regexp2.Compiled|regexp2.IgnoreCase)
+	AnimeBlurayRegex = regexp2.MustCompile(
+		`bd(?:720|1080)|(?<=[-_. (\[])bd(?=[-_. )\]])`,
+		regexp2.Compiled|regexp2.IgnoreCase)
 
-var HighDefPdtvRegex = regexp2.MustCompile(`hr[-_. ]ws`, regexp2.Compiled|regexp2.IgnoreCase)
+	HighDefPdtvRegex = regexp2.MustCompile(`hr[-_. ]ws`,
+		regexp2.Compiled|regexp2.IgnoreCase)
+)
+
+type sourceMatches map[string][]string
+
+func (s sourceMatches) Has(key string) bool {
+	return len(s[key]) > 0
+}
+
+func findSourceMatches(name string) sourceMatches {
+	matches := sourceMatches{}
+	sourceMatch, _ := SourceRegex.FindStringMatch(name)
+
+	for sourceMatch != nil {
+		for _, group := range sourceMatch.Groups() {
+			switch group.Name {
+			case "bluray", "webdl", "hdtv", "bdrip", "brrip", "dvd", "dsr", "pdtv", "sdtv", "tvrip":
+				for _, capture := range group.Captures {
+					if _, exists := matches[group.Name]; !exists {
+						matches[group.Name] = []string{}
+					}
+					matches[group.Name] = append(matches[group.Name], capture.String())
+				}
+			}
+		}
+		sourceMatch, _ = SourceRegex.FindNextMatch(sourceMatch)
+	}
+
+	return matches
+}
 
 func ParseQuality(name string) QualityModel {
 	log.Printf("Parsing quality for %q", name)
@@ -57,21 +88,22 @@ func ParseQuality(name string) QualityModel {
 
 	result := parseQualityModifiers(name, normalizedName)
 
+	log.Printf("Quality Modifiers: %v", result)
+
 	if match, _ := RawHDRegex.FindStringMatch(normalizedName); match != nil {
 		result.Quality = QualityRAWHD
 		return result
 	}
 
-	sourceMatch, _ := SourceRegex.FindStringMatch(normalizedName)
+	sourceMatches := findSourceMatches(normalizedName)
 	resolution := ParseResolution(normalizedName)
 	codecRegex, _ := CodecRegex.FindStringMatch(normalizedName)
 
 	log.Printf("Resolution %v", resolution)
-	dumpGroups(sourceMatch)
-	dumpGroups(codecRegex)
+	log.Printf("Source matches %v", sourceMatches)
 
-	if sourceMatch != nil {
-		if hasGroup(sourceMatch, "bluray") {
+	if len(sourceMatches) > 0 {
+		if sourceMatches.Has("bluray") {
 			if codecRegex != nil {
 				if hasGroup(codecRegex, "xvid") || hasGroup(codecRegex, "divx") {
 					result.Quality = QualityDVD
@@ -98,7 +130,7 @@ func ParseQuality(name string) QualityModel {
 			return result
 		}
 
-		if hasGroup(sourceMatch, "webdl") {
+		if sourceMatches.Has("webdl") {
 			if resolution == Resolution2160p {
 				result.Quality = QualityWEBDL2160p
 				return result
@@ -123,7 +155,7 @@ func ParseQuality(name string) QualityModel {
 			return result
 		}
 
-		if hasGroup(sourceMatch, "hdtv") {
+		if sourceMatches.Has("hdtv") {
 			if resolution == Resolution2160p {
 				result.Quality = QualityHDTV2160p
 				return result
@@ -148,7 +180,7 @@ func ParseQuality(name string) QualityModel {
 			return result
 		}
 
-		if hasGroup(sourceMatch, "bdrip") || hasGroup(sourceMatch, "brrip") {
+		if sourceMatches.Has("bdrip") || sourceMatches.Has("brrip") {
 			switch resolution {
 			case Resolution720p:
 				result.Quality = QualityBluray720p
@@ -162,15 +194,15 @@ func ParseQuality(name string) QualityModel {
 			}
 		}
 
-		if hasGroup(sourceMatch, "dvd") {
+		if sourceMatches.Has("dvd") {
 			result.Quality = QualityDVD
 			return result
 		}
 
-		if hasGroup(sourceMatch, "pdtv") ||
-			hasGroup(sourceMatch, "sdtv") ||
-			hasGroup(sourceMatch, "dsr") ||
-			hasGroup(sourceMatch, "tvrip") {
+		if sourceMatches.Has("pdtv") ||
+			sourceMatches.Has("sdtv") ||
+			sourceMatches.Has("dsr") ||
+			sourceMatches.Has("tvrip") {
 			if match, _ := HighDefPdtvRegex.FindStringMatch(normalizedName); match != nil {
 				result.Quality = QualityHDTV720p
 				return result
@@ -179,6 +211,8 @@ func ParseQuality(name string) QualityModel {
 			result.Quality = QualitySDTV
 			return result
 		}
+	} else {
+		log.Printf("No source match found")
 	}
 
 	//Anime Bluray matching
@@ -260,7 +294,7 @@ func ParseQuality(name string) QualityModel {
 
 	//Based on extension
 	if result.Quality == QualityUnknown {
-		result.Quality = getQualityForExtension(filepath.Ext(name))
+		result.Quality = getQualityForExtension(filepath.Ext(normalizedName))
 		result.QualitySource = "extension"
 	}
 
@@ -304,20 +338,15 @@ func parseQualityModifiers(name string, normalizedName string) QualityModel {
 	result := QualityModel{Quality: QualityUnknown}
 
 	if m, _ := ProperRegex.FindStringMatch(normalizedName); m != nil {
-		result.Revision.Version = 2
+		result.Revision = RevisionProper
 	}
 
 	versionRegexResult, _ := VersionRegex.FindStringMatch(normalizedName)
-	if versionRegexResult != nil {
-		result.Revision.Version, _ = strconv.Atoi(versionRegexResult.GroupByName("version").String())
-	}
+	dumpGroups(versionRegexResult)
 
-	//TODO: re-enable this when we have a reliable way to determine real
-	//TODO: Only treat it as a real if it comes AFTER the season/epsiode number
-	// var realRegexResult = RealRegex.Matches(name)
-	// if realRegexResult.Count > 0 {
-	// 	result.Revision.Real = realRegexResult.Count
-	// }
+	if versionRegexResult != nil {
+		result.Revision, _ = strconv.Atoi(versionRegexResult.GroupByName("version").String())
+	}
 
 	return result
 }
