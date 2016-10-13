@@ -1,93 +1,95 @@
-using System;
-using System.Linq;
-using NzbDrone.Common.Extensions;
-using NzbDrone.Core.Qualities;
+package releaseinfo
 
-namespace NzbDrone.Core.Parser.Model
-{
-    public class ParsedEpisodeInfo
-    {
-        public string SeriesTitle { get; set; }
-        public SeriesTitleInfo SeriesTitleInfo { get; set; }
-        public QualityModel Quality { get; set; }
-        public int SeasonNumber { get; set; }
-        public int[] EpisodeNumbers { get; set; }
-        public int[] AbsoluteEpisodeNumbers { get; set; }
-        public string AirDate { get; set; }
-        public Language Language { get; set; }
-        public bool FullSeason { get; set; }
-        public bool Special { get; set; }
-        public string ReleaseGroup { get; set; }
-        public string ReleaseHash { get; set; }
+// using System;
+// using System.Linq;
+// using NzbDrone.Common.Extensions;
+// using NzbDrone.Core.Qualities;
 
-        public ParsedEpisodeInfo()
-        {
-            EpisodeNumbers = new int[0];
-            AbsoluteEpisodeNumbers = new int[0];
-        }
+// namespace NzbDrone.Core.Parser.Model
+// {
+//     public class ParsedEpisodeInfo
+//     {
+//         public string SeriesTitle { get; set; }
+//         public SeriesTitleInfo SeriesTitleInfo { get; set; }
+//         public QualityModel Quality { get; set; }
+//         public int SeasonNumber { get; set; }
+//         public int[] EpisodeNumbers { get; set; }
+//         public int[] AbsoluteEpisodeNumbers { get; set; }
+//         public string AirDate { get; set; }
+//         public Language Language { get; set; }
+//         public bool FullSeason { get; set; }
+//         public bool Special { get; set; }
+//         public string ReleaseGroup { get; set; }
+//         public string ReleaseHash { get; set; }
 
-        public bool IsDaily
-        {
-            get
-            {
-                return !string.IsNullOrWhiteSpace(AirDate);
-            }
+//         public ParsedEpisodeInfo()
+//         {
+//             EpisodeNumbers = new int[0];
+//             AbsoluteEpisodeNumbers = new int[0];
+//         }
 
-            //This prevents manually downloading a release from blowing up in mono
-            //TODO: Is there a better way?
-            private set { }
-        }
+//         public bool IsDaily
+//         {
+//             get
+//             {
+//                 return !string.IsNullOrWhiteSpace(AirDate);
+//             }
 
-        public bool IsAbsoluteNumbering
-        {
-            get
-            {
-                return AbsoluteEpisodeNumbers.Any();
-            }
+//             //This prevents manually downloading a release from blowing up in mono
+//             //TODO: Is there a better way?
+//             private set { }
+//         }
 
-            //This prevents manually downloading a release from blowing up in mono
-            //TODO: Is there a better way?
-            private set { }
-        }
+//         public bool IsAbsoluteNumbering
+//         {
+//             get
+//             {
+//                 return AbsoluteEpisodeNumbers.Any();
+//             }
 
-        public bool IsPossibleSpecialEpisode
-        {
-            get
-            {
-                // if we don't have eny episode numbers we are likely a special episode and need to do a search by episode title
-                return (AirDate.IsNullOrWhiteSpace() &&
-                       SeriesTitle.IsNullOrWhiteSpace() &&
-                       (EpisodeNumbers.Length == 0 || SeasonNumber == 0) ||
-                       !SeriesTitle.IsNullOrWhiteSpace() && Special);
-            }
+//             //This prevents manually downloading a release from blowing up in mono
+//             //TODO: Is there a better way?
+//             private set { }
+//         }
 
-            //This prevents manually downloading a release from blowing up in mono
-            //TODO: Is there a better way?
-            private set {}
-        }
+//         public bool IsPossibleSpecialEpisode
+//         {
+//             get
+//             {
+//                 // if we don't have eny episode numbers we are likely a special episode and need to do a search by episode title
+//                 return (AirDate.IsNullOrWhiteSpace() &&
+//                        SeriesTitle.IsNullOrWhiteSpace() &&
+//                        (EpisodeNumbers.Length == 0 || SeasonNumber == 0) ||
+//                        !SeriesTitle.IsNullOrWhiteSpace() && Special);
+//             }
 
-        public override string ToString()
-        {
-            string episodeString = "[Unknown Episode]";
+//             //This prevents manually downloading a release from blowing up in mono
+//             //TODO: Is there a better way?
+//             private set {}
+//         }
 
-            if (IsDaily && EpisodeNumbers.Empty())
-            {
-                episodeString = string.Format("{0}", AirDate);
-            }
-            else if (FullSeason)
-            {
-                episodeString = string.Format("Season {0:00}", SeasonNumber);
-            }
-            else if (EpisodeNumbers != null && EpisodeNumbers.Any())
-            {
-                episodeString = string.Format("S{0:00}E{1}", SeasonNumber, string.Join("-", EpisodeNumbers.Select(c => c.ToString("00"))));
-            }
-            else if (AbsoluteEpisodeNumbers != null && AbsoluteEpisodeNumbers.Any())
-            {
-                episodeString = string.Format("{0}", string.Join("-", AbsoluteEpisodeNumbers.Select(c => c.ToString("000"))));
-            }
+//         public override string ToString()
+//         {
+//             string episodeString = "[Unknown Episode]";
 
-            return string.Format("{0} - {1} {2}", SeriesTitle, episodeString, Quality);
-        }
-    }
-}
+//             if (IsDaily && EpisodeNumbers.Empty())
+//             {
+//                 episodeString = string.Format("{0}", AirDate);
+//             }
+//             else if (FullSeason)
+//             {
+//                 episodeString = string.Format("Season {0:00}", SeasonNumber);
+//             }
+//             else if (EpisodeNumbers != null && EpisodeNumbers.Any())
+//             {
+//                 episodeString = string.Format("S{0:00}E{1}", SeasonNumber, string.Join("-", EpisodeNumbers.Select(c => c.ToString("00"))));
+//             }
+//             else if (AbsoluteEpisodeNumbers != null && AbsoluteEpisodeNumbers.Any())
+//             {
+//                 episodeString = string.Format("{0}", string.Join("-", AbsoluteEpisodeNumbers.Select(c => c.ToString("000"))));
+//             }
+
+//             return string.Format("{0} - {1} {2}", SeriesTitle, episodeString, Quality);
+//         }
+//     }
+// }

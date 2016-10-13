@@ -1,53 +1,55 @@
-using System;
-using System.Text;
+package releaseinfo
 
-namespace NzbDrone.Core.Parser.Model
-{
-    public class TorrentInfo : ReleaseInfo
-    {
-        public string MagnetUrl { get; set; }
-        public string InfoHash { get; set; }
-        public int? Seeders { get; set; }
-        public int? Peers { get; set; }
+// using System;
+// using System.Text;
 
-        public static int? GetSeeders(ReleaseInfo release)
-        {
-            var torrentInfo = release as TorrentInfo;
+// namespace NzbDrone.Core.Parser.Model
+// {
+//     public class TorrentInfo : ReleaseInfo
+//     {
+//         public string MagnetUrl { get; set; }
+//         public string InfoHash { get; set; }
+//         public int? Seeders { get; set; }
+//         public int? Peers { get; set; }
 
-            if (torrentInfo == null)
-            {
-                return null;
-            }
+//         public static int? GetSeeders(ReleaseInfo release)
+//         {
+//             var torrentInfo = release as TorrentInfo;
 
-            return torrentInfo.Seeders;
-        }
+//             if (torrentInfo == null)
+//             {
+//                 return null;
+//             }
 
-        public static int? GetPeers(ReleaseInfo release)
-        {
-            var torrentInfo = release as TorrentInfo;
+//             return torrentInfo.Seeders;
+//         }
 
-            if (torrentInfo == null)
-            {
-                return null;
-            }
+//         public static int? GetPeers(ReleaseInfo release)
+//         {
+//             var torrentInfo = release as TorrentInfo;
 
-            return torrentInfo.Peers;
-        }
+//             if (torrentInfo == null)
+//             {
+//                 return null;
+//             }
 
-        public override string ToString(string format)
-        {
-            var stringBuilder = new StringBuilder(base.ToString(format));
-            switch (format.ToUpperInvariant())
-            {
-                case "L": // Long format
-                    stringBuilder.AppendLine("MagnetUrl: " + MagnetUrl ?? "Empty");
-                    stringBuilder.AppendLine("InfoHash: " + InfoHash ?? "Empty");
-                    stringBuilder.AppendLine("Seeders: " + Seeders ?? "Empty");
-                    stringBuilder.AppendLine("Peers: " + Peers ?? "Empty");
-                    break;
-            }
+//             return torrentInfo.Peers;
+//         }
 
-            return stringBuilder.ToString();
-        }
-    }
-}
+//         public override string ToString(string format)
+//         {
+//             var stringBuilder = new StringBuilder(base.ToString(format));
+//             switch (format.ToUpperInvariant())
+//             {
+//                 case "L": // Long format
+//                     stringBuilder.AppendLine("MagnetUrl: " + MagnetUrl ?? "Empty");
+//                     stringBuilder.AppendLine("InfoHash: " + InfoHash ?? "Empty");
+//                     stringBuilder.AppendLine("Seeders: " + Seeders ?? "Empty");
+//                     stringBuilder.AppendLine("Peers: " + Peers ?? "Empty");
+//                     break;
+//             }
+
+//             return stringBuilder.ToString();
+//         }
+//     }
+// }

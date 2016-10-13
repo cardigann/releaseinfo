@@ -1,15 +1,17 @@
-﻿using NzbDrone.Common.Exceptions;
+﻿package releaseinfo
 
-namespace NzbDrone.Core.Parser
-{
-    public class InvalidDateException : NzbDroneException
-    {
-        public InvalidDateException(string message, params object[] args) : base(message, args)
-        {
-        }
+// using NzbDrone.Common.Exceptions;
 
-        public InvalidDateException(string message) : base(message)
-        {
-        }
-    }
-}
+// namespace NzbDrone.Core.Parser
+// {
+//     public class InvalidDateException : NzbDroneException
+//     {
+//         public InvalidDateException(string message, params object[] args) : base(message, args)
+//         {
+//         }
+
+//         public InvalidDateException(string message) : base(message)
+//         {
+//         }
+//     }
+// }

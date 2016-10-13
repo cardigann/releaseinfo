@@ -1,26 +1,28 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NzbDrone.Core.Tv;
+package releaseinfo
 
-namespace NzbDrone.Core.Parser.Model
-{
-    public class RemoteEpisode
-    {
-        public ReleaseInfo Release { get; set; }
-        public ParsedEpisodeInfo ParsedEpisodeInfo { get; set; }
-        public Series Series { get; set; }
-        public List<Episode> Episodes { get; set; }
-        public bool DownloadAllowed { get; set; }
+// using System;
+// using System.Collections.Generic;
+// using System.Linq;
+// using NzbDrone.Core.Tv;
 
-        public bool IsRecentEpisode()
-        {
-            return Episodes.Any(e => e.AirDateUtc >= DateTime.UtcNow.Date.AddDays(-14));
-        }
+// namespace NzbDrone.Core.Parser.Model
+// {
+//     public class RemoteEpisode
+//     {
+//         public ReleaseInfo Release { get; set; }
+//         public ParsedEpisodeInfo ParsedEpisodeInfo { get; set; }
+//         public Series Series { get; set; }
+//         public List<Episode> Episodes { get; set; }
+//         public bool DownloadAllowed { get; set; }
 
-        public override string ToString()
-        {
-            return Release.Title;
-        }
-    }
-}
+//         public bool IsRecentEpisode()
+//         {
+//             return Episodes.Any(e => e.AirDateUtc >= DateTime.UtcNow.Date.AddDays(-14));
+//         }
+
+//         public override string ToString()
+//         {
+//             return Release.Title;
+//         }
+//     }
+// }
