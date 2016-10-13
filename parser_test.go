@@ -869,3 +869,30 @@ func TestParsingMultiEpisodeTitles(t *testing.T) {
 			fmt.Sprintf("Row %d should not be a full season)", idx+1))
 	}
 }
+
+func TestParsingMiniSeriesEpisodeTitles(t *testing.T) {
+	for idx, test := range []struct {
+		title         string
+		expectedTitle string
+		episode       int
+	}{
+		{"The.Kennedys.Part.2.DSR.XviD-SYS", "The Kennedys", 2},
+		{"the-pacific-e07-720p", "the-pacific", 7},
+		{"Hatfields and McCoys 2012 Part 1 REPACK 720p HDTV x264 2HD", "Hatfields and McCoys 2012", 1},
+	} {
+		result, err := ParseTitle(test.title)
+
+		require.NoError(t, err,
+			fmt.Sprintf("Row %d should have no error", idx+1))
+		require.Equal(t, test.expectedTitle, result.SeriesTitleInfo.Title,
+			fmt.Sprintf("Row %d should have correct title", idx+1))
+		require.Equal(t, 1, result.SeasonNumber,
+			fmt.Sprintf("Row %d should have correct season", idx+1))
+		require.Equal(t, []int{test.episode}, result.EpisodeNumbers,
+			fmt.Sprintf("Row %d should have correct episodes", idx+1))
+		require.Len(t, result.AbsoluteEpisodeNumbers, 0,
+			fmt.Sprintf("Row %d should have 0 absolute episode numbers", idx+1))
+		require.False(t, result.FullSeason,
+			fmt.Sprintf("Row %d should not be a full season)", idx+1))
+	}
+}
