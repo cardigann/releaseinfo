@@ -4,8 +4,34 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dlclark/regexp2"
+
 	"golang.org/x/text/language"
 )
+
+var (
+	wordDelimiterRegex = regexp2.MustCompile(`(\s|\.|,|_|-|=|\|)+`,
+		regexp2.Compiled)
+
+	punctuationRegex = regexp2.MustCompile(`[^\w\s]`,
+		regexp2.Compiled)
+
+	commonWordRegex = regexp2.MustCompile(`\b(a|an|the|and|or|of)\b\s?`,
+		regexp2.IgnoreCase|regexp2.Compiled)
+
+	duplicateSpacesRegex = regexp2.MustCompile(`\s{2,}`,
+		regexp2.Compiled)
+)
+
+// Normalize a series title, removing all spaces, punctation and whitespace
+func NormalizeSeriesTitle(title string) string {
+	title = optionalReplace(wordDelimiterRegex, title, "")
+	title = optionalReplace(punctuationRegex, title, "")
+	title = optionalReplace(commonWordRegex, title, "")
+	title = optionalReplace(duplicateSpacesRegex, title, "")
+
+	return strings.ToLower(removeSpace(title))
+}
 
 type EpisodeInfo struct {
 	SeriesTitle            string
@@ -26,6 +52,14 @@ type SeriesTitleInfo struct {
 	Title            string
 	TitleWithoutYear string
 	Year             int
+}
+
+func (i SeriesTitleInfo) Normalize() string {
+	return NormalizeSeriesTitle(i.Title)
+}
+
+func (i SeriesTitleInfo) Equal(title string) bool {
+	return i.Normalize() == NormalizeSeriesTitle(title)
 }
 
 func (i EpisodeInfo) IsDaily() bool {

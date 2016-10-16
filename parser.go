@@ -243,9 +243,6 @@ var (
 	yearInTitleRegex = regexp2.MustCompile(`^(?<title>.+?)(?:\W|_)?(?<year>\d{4})`,
 		regexp2.IgnoreCase|regexp2.Compiled)
 
-	duplicateSpacesRegex = regexp2.MustCompile(`\s{2,}`,
-		regexp2.Compiled)
-
 	requestInfoRegex = regexp2.MustCompile(`\[.+?\]`,
 		regexp2.Compiled)
 )
